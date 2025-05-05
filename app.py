@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
-import joblib
-import plotly.graph_objects as go
 import pickle
+import plotly.graph_objects as go
+from sklearn.preprocessing import LabelEncoder
 
 # Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
@@ -59,11 +59,26 @@ def user_input():
     })
     return data
 
+# Function to encode the input data
+def encode_input_data(input_df):
+    le = LabelEncoder()
+    columns_to_encode = ['Partner', 'Dependents', 'InternetService', 'OnlineSecurity', 
+                         'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 
+                         'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod']
+    
+    for column in columns_to_encode:
+        input_df[column] = le.fit_transform(input_df[column])
+    
+    return input_df
+
 input_df = user_input()
+
+# Encode the input data
+encoded_input_df = encode_input_data(input_df)
 
 # Prediction
 if st.button("🔍 Predict Now"):
-    prediction_proba = model.predict_proba(input_df)[0][1]
+    prediction_proba = model.predict_proba(encoded_input_df)[0][1]
     prediction = 1 if prediction_proba >= threshold else 0
 
     st.subheader("📊 Result:")
