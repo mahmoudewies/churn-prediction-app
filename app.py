@@ -4,42 +4,39 @@ import joblib
 import plotly.graph_objects as go
 import pickle
 
-# تحميل النموذج والثريشولد
+# Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
     model_data = pickle.load(f)
 
 model = model_data["model"]
 threshold = model_data["threshold"]
 
-# تحميل النموذج
-model = joblib.load("final_stacked_model.pkl")
-
-# عنوان الصفحة
+# Page configuration
 st.set_page_config(page_title="Churn Prediction App", layout="centered")
 st.title("🔮 Churn Prediction App")
-st.markdown("أدخل بيانات العميل لتوقع احتمالية ترك الخدمة.")
+st.markdown("Enter customer information to predict the likelihood of churn.")
 
-# إدخال البيانات
+# Input form
 def user_input():
-    SeniorCitizen = st.selectbox("هل العميل كبير سن؟", [0, 1])
-    Partner = st.selectbox("هل لديه شريك؟", ["Yes", "No"])
-    Dependents = st.selectbox("هل لديه معالون؟", ["Yes", "No"])
-    tenure = st.slider("مدة الاشتراك (بالأشهر)", 0, 72, 12)
-    InternetService = st.selectbox("نوع الإنترنت", ["DSL", "Fiber optic", "No"])
-    OnlineSecurity = st.selectbox("الأمان على الإنترنت", ["Yes", "No", "No internet service"])
-    OnlineBackup = st.selectbox("نسخ احتياطي", ["Yes", "No", "No internet service"])
-    DeviceProtection = st.selectbox("حماية الأجهزة", ["Yes", "No", "No internet service"])
-    TechSupport = st.selectbox("دعم تقني", ["Yes", "No", "No internet service"])
-    StreamingTV = st.selectbox("خدمة بث تلفزيوني", ["Yes", "No", "No internet service"])
-    StreamingMovies = st.selectbox("خدمة أفلام", ["Yes", "No", "No internet service"])
-    Contract = st.selectbox("نوع العقد", ["Month-to-month", "One year", "Two year"])
-    PaperlessBilling = st.selectbox("فاتورة إلكترونية", ["Yes", "No"])
-    PaymentMethod = st.selectbox("طريقة الدفع", [
+    SeniorCitizen = st.selectbox("Is the customer a senior citizen?", [0, 1])
+    Partner = st.selectbox("Has a partner?", ["Yes", "No"])
+    Dependents = st.selectbox("Has dependents?", ["Yes", "No"])
+    tenure = st.slider("Tenure (months)", 0, 72, 12)
+    InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
+    OnlineSecurity = st.selectbox("Online Security", ["Yes", "No", "No internet service"])
+    OnlineBackup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
+    DeviceProtection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"])
+    TechSupport = st.selectbox("Tech Support", ["Yes", "No", "No internet service"])
+    StreamingTV = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"])
+    StreamingMovies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"])
+    Contract = st.selectbox("Contract Type", ["Month-to-month", "One year", "Two year"])
+    PaperlessBilling = st.selectbox("Paperless Billing?", ["Yes", "No"])
+    PaymentMethod = st.selectbox("Payment Method", [
         "Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"
     ])
-    MonthlyCharges = st.number_input("الرسوم الشهرية", min_value=0.0)
-    TotalCharges = st.number_input("إجمالي الرسوم", min_value=0.0)
-    TotalServices = st.slider("عدد الخدمات", 0, 10, 5)
+    MonthlyCharges = st.number_input("Monthly Charges", min_value=0.0)
+    TotalCharges = st.number_input("Total Charges", min_value=0.0)
+    TotalServices = st.slider("Total Services Used", 0, 10, 5)
 
     data = pd.DataFrame({
         'SeniorCitizen': [SeniorCitizen],
@@ -64,26 +61,23 @@ def user_input():
 
 input_df = user_input()
 
-# التوقع
-if st.button("🔍 توقع الآن"):
+# Prediction
+if st.button("🔍 Predict Now"):
     prediction_proba = model.predict_proba(input_df)[0][1]
+    prediction = 1 if prediction_proba >= threshold else 0
 
-    if prediction_proba >= threshold:
-        prediction = 1
-    else:
-        prediction = 0
-
-
-    st.subheader("📊 النتيجة:")
+    st.subheader("📊 Result:")
     if prediction == 1:
-        st.error(f"🚨 العميل مرشح لترك الخدمة (Churn) بنسبة {prediction_proba:.2%}")
+        st.error(f"🚨 The customer is likely to churn with a probability of {prediction_proba:.2%}")
     else:
-        st.success(f"✅ العميل سيبقى (No Churn) بنسبة {(1 - prediction_proba):.2%}")
+        st.success(f"✅ The customer is likely to stay with a probability of {(1 - prediction_proba):.2%}")
 
-    # رسم بياني دائري بالاحتمالات
-    fig = go.Figure(data=[go.Pie(labels=['No Churn', 'Churn'],
-                                 values=[1 - prediction_proba, prediction_proba],
-                                 marker_colors=['green', 'red'],
-                                 hole=0.4)])
-    fig.update_layout(title="احتمالية ترك الخدمة", width=500, height=400)
+    # Pie chart
+    fig = go.Figure(data=[go.Pie(
+        labels=['No Churn', 'Churn'],
+        values=[1 - prediction_proba, prediction_proba],
+        marker_colors=['green', 'red'],
+        hole=0.4
+    )])
+    fig.update_layout(title="Churn Probability", width=500, height=400)
     st.plotly_chart(fig)
