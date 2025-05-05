@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 import joblib
 import plotly.graph_objects as go
+import pickle
+
+# تحميل النموذج والثريشولد
+with open("final_stacked_model.pkl", "rb") as f:
+    model_data = pickle.load(f)
+
+model = model_data["model"]
+threshold = model_data["threshold"]
 
 # تحميل النموذج
 model = joblib.load("final_stacked_model.pkl")
@@ -58,8 +66,13 @@ input_df = user_input()
 
 # التوقع
 if st.button("🔍 توقع الآن"):
-    prediction_proba = model.predict_proba(input_df)[0][1]  # احتمالية churn
-    prediction = model.predict(input_df)[0]
+    prediction_proba = model.predict_proba(input_df)[0][1]
+
+    if prediction_proba >= threshold:
+        prediction = 1
+    else:
+        prediction = 0
+
 
     st.subheader("📊 النتيجة:")
     if prediction == 1:
