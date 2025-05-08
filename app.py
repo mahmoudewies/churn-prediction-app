@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 import mlflow
 import datetime
 import os
+from monitoring import generate_drift_report
 
 # Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
@@ -75,6 +76,12 @@ def encode_input_data(input_df):
     return input_df
 
 input_df = user_input()
+# تأكد من وجود مجلدات التخزين
+os.makedirs("data/user_inputs", exist_ok=True)
+
+# احفظ الإدخال الحالي
+input_df.to_csv("data/user_inputs/latest_input.csv", index=False)
+
 encoded_input_df = encode_input_data(input_df)
 
 # Prediction and MLOps Logging
@@ -102,7 +109,16 @@ if st.button("🔍 Predict Now"):
     # Save input data for monitoring
     os.makedirs("data/user_inputs", exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    input_df.to_csv(f"data/user_inputs/input_{timestamp}.csv", index=False)
+    input_path = f"data/user_inputs/input_{timestamp}.csv"
+    input_df.to_csv(input_path, index=False)
+
+    # 📉 Generate Drift Report
+    reference_data = pd.read_csv("data/reference_data.csv")
+    current_data = input_df  # current input
+    drift_path = generate_drift_report(reference_data, current_data)  # assume returns "data/drift_report.html"
+
+    # 🔗 Show Drift Report Link
+    st.markdown("📉 [View Data Drift Report](data/drift_report.html)", unsafe_allow_html=True)
 
     # MLflow Logging
     mlflow.set_tracking_uri("http://localhost:5000")  # Change if you're using a remote server
