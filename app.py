@@ -7,6 +7,12 @@ import mlflow
 import datetime
 import os
 from monitoring import generate_drift_report
+import subprocess
+import streamlit as st
+
+# عرض الحزم المثبتة باستخدام pip freeze
+installed_packages = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'])
+st.text(installed_packages.decode('utf-8'))
 
 # Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
