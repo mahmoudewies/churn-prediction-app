@@ -4,7 +4,6 @@ import pickle
 import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
 import mlflow
-import mlflow.sklearn
 import time
 from datetime import datetime
 import numpy as np
@@ -71,23 +70,29 @@ def retrain_model():
                 model = RandomForestClassifier(n_estimators=100, random_state=42)
                 model.fit(X_train, y_train)
 
-                # حفظ النموذج بعد التدريب باستخدام MLflow
-                with mlflow.start_run():
-                    mlflow.sklearn.log_model(model, "model")
-                    mlflow.log_param("n_estimators", 100)
-                    mlflow.log_param("random_state", 42)
+                # حساب التقييمات
+                y_pred = model.predict(X_test)
+                acc = accuracy_score(y_test, y_pred)
+                f1 = f1_score(y_test, y_pred)
 
-                    # حساب المقاييس وتسجيلها
-                    y_pred = model.predict(X_test)
-                    accuracy = accuracy_score(y_test, y_pred)
-                    f1 = f1_score(y_test, y_pred)
-
-                    mlflow.log_metric("accuracy", accuracy)
-                    mlflow.log_metric("f1_score", f1)
+                # حفظ النموذج بعد التدريب
+                with open("final_stacked_model.pkl", "wb") as f:
+                    pickle.dump({
+                        "model": model,
+                        "threshold": 0.5  # يمكن تخصيص العتبة هنا
+                    }, f)
 
                 # عرض رسالة نجاح
                 st.success("Model retrained and saved successfully!")
                 st.balloons()
+
+                # تسجيل التدريب في MLflow
+                mlflow.set_experiment("Churn_Model_Training")
+                with mlflow.start_run(run_name="Retraining_Run"):
+                    mlflow.log_param("model_type", "RandomForestClassifier")
+                    mlflow.log_metric("accuracy", acc)
+                    mlflow.log_metric("f1_score", f1)
+                    mlflow.log_artifact("final_stacked_model.pkl")
 
 # Display GIF in the center
 st.markdown("""
@@ -221,6 +226,14 @@ def make_prediction(input_df):
     try:
         prediction_proba = model.predict_proba(input_df)[0][1]
         prediction = 1 if prediction_proba >= threshold else 0
+        
+        # Log prediction to MLflow
+        mlflow.set_experiment("Churn_Prediction_Logs")
+        with mlflow.start_run(run_name="Prediction_Run"):
+            mlflow.log_param("threshold", threshold)
+            mlflow.log_metric("prediction_probability", prediction_proba)
+            mlflow.log_metric("predicted_class", prediction)
+
         return prediction_proba, prediction
     except Exception as e:
         st.error(f"Prediction failed: {str(e)}")
@@ -241,18 +254,26 @@ def main():
             st.info("No performance data yet. Make some predictions first.")
         else:
             perf_df = pd.DataFrame(monitor.performance_history)
-            st.line_chart(perf_df.set_index('timestamp')[['accuracy', 'f1_score']])
+            st.line_chart(perf_df.set_index('timestamp'))
+            
+            latest = perf_df.iloc[-1]
+            col1, col2 = st.columns(2)
+            col1.metric("Latest Accuracy", f"{latest['accuracy']:.2%}")
+            col2.metric("Latest F1 Score", f"{latest['f1_score']:.2%}")
 
-    # Prediction Form
-    user_input = get_user_input()
-    if st.button("Predict Churn"):
-        prediction_proba, prediction = make_prediction(user_input)
+    # Get user input and show prediction results
+    input_df = get_user_input()
+    
+    if st.button("Make Prediction"):
+        prediction_proba, prediction = make_prediction(input_df)
         
         if prediction is not None:
             if prediction == 1:
-                st.warning(f"The customer is likely to churn with a probability of {prediction_proba:.2f}")
+                st.markdown("### Prediction: **Churn (Customer will leave)**")
+                st.markdown(f"Probability: {prediction_proba:.2%}")
             else:
-                st.success(f"The customer is not likely to churn with a probability of {prediction_proba:.2f}")
+                st.markdown("### Prediction: **No Churn (Customer will stay)**")
+                st.markdown(f"Probability: {prediction_proba:.2%}")
 
 if __name__ == "__main__":
     main()
