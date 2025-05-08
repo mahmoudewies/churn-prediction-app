@@ -9,6 +9,48 @@ import time
 
 # Page config
 st.set_page_config(page_title="Churn Prediction App", layout="centered")
+def set_background_and_theme():
+    st.markdown("""
+        <style>
+        /* تغيير لون خلفية الصفحة بالكامل */
+        .stApp {
+            background-color: #d6d3f3;
+        }
+
+        /* لون النص */
+        body, h1, h2, h3, h4, h5, h6, label, p, div {
+            color: #2d2f81;
+            font-family: 'Kicker Trial Black', sans-serif;
+        }
+
+        /* تخصيص خانات الإدخال */
+        .stSelectbox, .stNumberInput, .stSlider, .stTextInput {
+            background-color: #aca8dc !important;
+            border-radius: 10px !important;
+            color: #2d2f81 !important;
+        }
+
+        /* تخصيص الأزرار */
+        .stButton > button {
+            background-color: #2d2f81;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            font-size: 16px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .stButton > button:hover {
+            background-color: #aca8dc;
+            color: #2d2f81;
+            transform: scale(1.05);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+# استدعاء الدالة
+set_background_and_theme()
 
 # Load external CSS
 with open("style.css") as f:
