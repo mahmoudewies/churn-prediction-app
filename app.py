@@ -7,7 +7,7 @@ from datetime import datetime
 
 # ----------------- تحميل النموذج -----------------
 import pickle
-
+global model
 # محاولة فتح النموذج وتحديد ما إذا كان ملف pickle فارغًا
 try:
     with open('model.pkl', 'rb') as f:
