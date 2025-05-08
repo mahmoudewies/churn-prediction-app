@@ -7,21 +7,7 @@ import mlflow
 import datetime
 import os
 from monitoring import generate_drift_report
-import sys
-import subprocess
-import streamlit as st
-import streamlit as st
 
-# يجب أن تكون هذه الدالة أول شيء بعد الاستيراد
-st.set_page_config(page_title="Churn Prediction App", layout="centered")
-
-# باقي الكود هنا
-
-# عرض الحزم المثبتة باستخدام pip freeze
-installed_packages = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'])
-st.text(installed_packages.decode('utf-8'))
-
-# Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
     model_data = pickle.load(f)
 
