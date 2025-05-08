@@ -76,10 +76,10 @@ def retrain_model():
 
                 # حفظ النموذج بعد التدريب
                 with open("final_stacked_model.pkl", "wb") as f:
-                    pickle.dump({
-                        "model": model,
-                        "threshold": 0.5  # يمكن تخصيص العتبة هنا
-                    }, f)
+                        pickle.dump({
+                            "model": model,
+                            "threshold": threshold  # تأكد من أن العتبة نفسها تُحفظ
+                        }, f)
 
                 # عرض رسالة نجاح
                 st.success("Model retrained and saved successfully!")
