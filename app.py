@@ -253,7 +253,7 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
 
     # Log prediction to MLflow
     try:
-        mlflow.set_tracking_uri("http://localhost:5000")
+        mlflow.set_tracking_uri("http://127.0.0.1:5000/")
         mlflow.set_experiment("Churn_Prediction_App")
         
         with mlflow.start_run(run_name="User_Prediction"):
