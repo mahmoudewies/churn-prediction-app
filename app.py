@@ -32,7 +32,6 @@ class ModelMonitor:
             'f1_score': f1
         })
         
-        # If performance drops below threshold, alert the user
         if len(self.performance_history) > 5 and np.mean([x['f1_score'] for x in self.performance_history[-5:]]) < 0.7:
             st.sidebar.error("🚨 Alert: Model performance degradation detected!")
 
@@ -96,11 +95,13 @@ st.markdown("""
             text-align: center;
             margin-bottom: 2rem;
         }
+        
+        /* ... (بقية أنماط CSS الخاصة بك كما هي) ... */
     </style>
 """, unsafe_allow_html=True)
 
 # ============== App Header ==============
-col1, col2, col3 = st.columns([1, 3, 1])
+col1, col2, col3 = st.columns([1,3,1])
 with col2:
     st.markdown('<h1 class="title-text">✨ Churn Prediction Wizard</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle-text">Predict customer churn with machine learning precision</p>', unsafe_allow_html=True)
@@ -277,22 +278,11 @@ def main():
                     with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
                         mlflow.log_params(input_df.iloc[0].to_dict())
                         mlflow.log_metric("prediction_proba", float(prediction_proba))
-                        mlflow.log_metric("prediction_class", int(prediction))
-                        
-                        if len(monitor.performance_history) > 0:
-                            latest = monitor.performance_history[-1]
-                            mlflow.log_metric("accuracy", latest['accuracy'])
-                            mlflow.log_metric("f1_score", latest['f1_score'])
+                        mlflow.log_metric("prediction", int(prediction))
+                        mlflow.log_metric("ground_truth", int(ground_truth_binary))
+                        mlflow.log_artifact("final_stacked_model.pkl")
                 except Exception as e:
-                    st.warning(f"MLflow logging failed: {str(e)}")
-
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-        <div style='text-align:center;color:#6c757d;font-size:0.9rem'>
-            <p>🔮 Predictive Analytics | 📊 Customer Insights | 🤖 ML Powered</p>
-        </div>
-    """, unsafe_allow_html=True)
+                    st.warning(f"Error logging to MLflow: {str(e)}")
 
 if __name__ == "__main__":
     main()
