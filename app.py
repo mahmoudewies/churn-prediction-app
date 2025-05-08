@@ -260,13 +260,18 @@ def main():
                 # Log performance (simulating ground truth)
                 # Ask user to provide ground truth after prediction
                 # Ask user for actual (ground truth) label
-                ground_truth = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
+                # Ask user for actual (ground truth) label
+                ground_truth_label = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
                 
                 # Convert to binary
-                ground_truth_binary = 0 if ground_truth == "Stayed" else 1
+                ground_truth_binary = 0 if ground_truth_label == "Stayed" else 1
                 
                 # Log performance
                 monitor.log_performance([ground_truth_binary], [prediction])
+                
+                # Debug display
+                st.success("✅ Performance logged successfully.")
+                st.write("📊 Current Performance History:", monitor.performance_history)
 
 
                 # Log to MLflow
