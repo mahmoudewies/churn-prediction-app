@@ -15,7 +15,6 @@ st.set_page_config(
 )
 
 # Only after page config you can do other stuff
-st.title("My App")
 # Display GIF in the center
 st.markdown("""
     <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
