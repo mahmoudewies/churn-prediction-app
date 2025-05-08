@@ -6,15 +6,18 @@ from sklearn.preprocessing import LabelEncoder
 import mlflow
 import time
 from datetime import datetime
+import streamlit as st
 
-# 1. تهيئة الصفحة (يجب أن تكون أول أمر)
+# MUST be the first command
 st.set_page_config(
-    page_title="✨ Churn Prediction Wizard",
+    page_title="My App",
     layout="centered",
-    page_icon="🔮",
-    initial_sidebar_state="expanded",
-    default_theme="light"
+    initial_sidebar_state="auto"
 )
+
+# Only after page config you can do other stuff
+st.title("My App")
+
 
 # 2. تحميل النموذج
 @st.cache_resource
