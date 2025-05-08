@@ -3,9 +3,8 @@ import pandas as pd
 import pickle
 import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
-import mlflow
-import os
-import datetime
+import time
+import random
 
 # Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
@@ -16,8 +15,51 @@ threshold = model_data["threshold"]
 
 # Page configuration
 st.set_page_config(page_title="Churn Prediction App", layout="centered")
-st.title("🔮 Churn Prediction App")
-st.markdown("Enter customer information to predict the likelihood of churn.")
+
+# Custom CSS for stunning effects
+st.markdown("""
+    <style>
+    .header {
+        text-align: center;
+        font-size: 3rem;
+        color: #f1c40f;
+        font-family: 'Courier New', Courier, monospace;
+        animation: colorChange 5s infinite;
+    }
+
+    @keyframes colorChange {
+        0% { color: #f1c40f; }
+        25% { color: #e74c3c; }
+        50% { color: #2ecc71; }
+        75% { color: #3498db; }
+        100% { color: #f1c40f; }
+    }
+
+    .moving-box {
+        position: relative;
+        animation: moveBox 3s ease-in-out infinite;
+        width: 150px;
+        height: 150px;
+        background-color: #9b59b6;
+        margin: 20px auto;
+    }
+
+    @keyframes moveBox {
+        0% { transform: translateX(-50%); }
+        50% { transform: translateX(50%); }
+        100% { transform: translateX(-50%); }
+    }
+
+    .stButton>button:hover {
+        background-color: #3498db;
+        color: white;
+    }
+
+    </style>
+""", unsafe_allow_html=True)
+
+# Title with animation
+st.markdown('<div class="header">🔮 Churn Prediction App</div>', unsafe_allow_html=True)
 
 # Input form
 def user_input():
@@ -84,13 +126,20 @@ if st.button("🔍 Predict Now"):
     prediction_proba = model.predict_proba(encoded_input_df)[0][1]
     prediction = 1 if prediction_proba >= threshold else 0
 
+    # Play sound effect based on prediction (if churn)
+    if prediction == 1:
+        st.audio("churn_sound.mp3")  # Add a sound effect when the customer churns
+
     st.subheader("📊 Result:")
     if prediction == 1:
         st.error(f"🚨 The customer is likely to churn with a probability of {prediction_proba:.2%}")
     else:
         st.success(f"✅ The customer is likely to stay with a probability of {(1 - prediction_proba):.2%}")
 
-    # Pie chart
+    # GIF of customer leaving
+    st.image("churn_gif.gif", caption="Customer Leaving", use_column_width=True)
+
+    # Pie chart with animation
     fig = go.Figure(data=[go.Pie(
         labels=['No Churn', 'Churn'],
         values=[1 - prediction_proba, prediction_proba],
@@ -100,19 +149,5 @@ if st.button("🔍 Predict Now"):
     fig.update_layout(title="Churn Probability", width=500, height=400)
     st.plotly_chart(fig)
 
-    # Save the input data
-    os.makedirs("data/user_inputs", exist_ok=True)
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    input_path = f"data/user_inputs/input_{timestamp}.csv"
-    input_df.to_csv(input_path, index=False)
-
-    # MLflow Logging
-    mlflow.set_tracking_uri("http://localhost:5000")  # Change if you're using a remote server
-    mlflow.set_experiment("Churn_Prediction_App")
-
-    with mlflow.start_run(run_name="User_Prediction"):
-        mlflow.log_params(encoded_input_df.to_dict(orient="records")[0])
-        mlflow.log_metric("prediction_proba", float(prediction_proba))
-        mlflow.log_metric("prediction_class", int(prediction))
-        
-    st.success("🔄 Prediction logged with MLflow!")
+    # Add a moving box as a decoration
+    st.markdown('<div class="moving-box"></div>', unsafe_allow_html=True)
