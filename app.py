@@ -4,6 +4,7 @@ import pickle
 import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
 import mlflow
+import mlflow.sklearn
 import time
 from datetime import datetime
 import numpy as np
@@ -70,18 +71,19 @@ def retrain_model():
                 model = RandomForestClassifier(n_estimators=100, random_state=42)
                 model.fit(X_train, y_train)
 
-                # تسجيل النموذج في MLflow
+                # حفظ النموذج بعد التدريب باستخدام MLflow
                 with mlflow.start_run():
-                    mlflow.sklearn.log_model(model, "churn_prediction_model")
-                    mlflow.log_metric("accuracy", accuracy_score(y_test, model.predict(X_test)))
-                    mlflow.log_metric("f1_score", f1_score(y_test, model.predict(X_test)))
+                    mlflow.sklearn.log_model(model, "model")
+                    mlflow.log_param("n_estimators", 100)
+                    mlflow.log_param("random_state", 42)
 
-                # حفظ النموذج بعد التدريب
-                with open("final_stacked_model.pkl", "wb") as f:
-                    pickle.dump({
-                        "model": model,
-                        "threshold": 0.5  # تخصيص العتبة هنا
-                    }, f)
+                    # حساب المقاييس وتسجيلها
+                    y_pred = model.predict(X_test)
+                    accuracy = accuracy_score(y_test, y_pred)
+                    f1 = f1_score(y_test, y_pred)
+
+                    mlflow.log_metric("accuracy", accuracy)
+                    mlflow.log_metric("f1_score", f1)
 
                 # عرض رسالة نجاح
                 st.success("Model retrained and saved successfully!")
@@ -219,11 +221,6 @@ def make_prediction(input_df):
     try:
         prediction_proba = model.predict_proba(input_df)[0][1]
         prediction = 1 if prediction_proba >= threshold else 0
-        
-        # تسجيل التنبؤات في MLflow
-        mlflow.log_metric("prediction_probability", prediction_proba)
-        mlflow.log_metric("prediction_class", prediction)
-        
         return prediction_proba, prediction
     except Exception as e:
         st.error(f"Prediction failed: {str(e)}")
@@ -232,12 +229,30 @@ def make_prediction(input_df):
             st.error(f"Model expects columns: {model.feature_names_in_.tolist()}")
         return None, None
 
-# Get user input and make prediction
-user_input = get_user_input()
-prediction_proba, prediction = make_prediction(user_input)
+# ============== Main App Logic ==============
+def main():
+    retrain_model()
+    
+    # Model Monitoring Dashboard
+    if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
+        st.subheader("Model Performance Monitoring")
+        
+        if len(monitor.performance_history) == 0:
+            st.info("No performance data yet. Make some predictions first.")
+        else:
+            perf_df = pd.DataFrame(monitor.performance_history)
+            st.line_chart(perf_df.set_index('timestamp')[['accuracy', 'f1_score']])
 
-# Display the prediction result
-if prediction is not None:
-    st.write(f"### Prediction Probability: {prediction_proba * 100:.2f}%")
-    st.write(f"### Predicted Churn: {'Yes' if prediction == 1 else 'No'}")
-    monitor.log_performance(user_input, prediction)
+    # Prediction Form
+    user_input = get_user_input()
+    if st.button("Predict Churn"):
+        prediction_proba, prediction = make_prediction(user_input)
+        
+        if prediction is not None:
+            if prediction == 1:
+                st.warning(f"The customer is likely to churn with a probability of {prediction_proba:.2f}")
+            else:
+                st.success(f"The customer is not likely to churn with a probability of {prediction_proba:.2f}")
+
+if __name__ == "__main__":
+    main()
