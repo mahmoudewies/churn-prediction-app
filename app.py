@@ -35,9 +35,7 @@ class ModelMonitor:
         if len(self.performance_history) > 5 and np.mean([x['f1_score'] for x in self.performance_history[-5:]]) < 0.7:
             st.sidebar.error("🚨 Alert: Model performance degradation detected!")
 
-if "monitor" not in st.session_state:
-    st.session_state["monitor"] = ModelMonitor()
-monitor = st.session_state["monitor"]
+monitor = ModelMonitor()
 
 # ============== Retraining Strategy ==============
 def retrain_model():
@@ -48,25 +46,12 @@ def retrain_model():
                 st.success("Model retrained successfully!")
                 st.balloons()
 
-# Display GIF in the center
-st.markdown("""
-    <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
-        <img src="https://raw.githubusercontent.com/mahmoudewies/churn-prediction-app/main/Pay%20Per%20Click%20Digital%20Marketing%20(1).gif" alt="GIF" width="600">
-    </div>
-""", unsafe_allow_html=True)
-
 # Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
     model_data = pickle.load(f)
 
 model = model_data["model"]
 threshold = model_data["threshold"]
-
-# Get expected features from the model (if available)
-try:
-    expected_features = model.feature_names_in_
-except AttributeError:
-    expected_features = None
 
 # ============== Custom CSS ==============
 st.markdown("""
@@ -94,8 +79,6 @@ st.markdown("""
             text-align: center;
             margin-bottom: 2rem;
         }
-        
-        /* ... (بقية أنماط CSS الخاصة بك كما هي) ... */
     </style>
 """, unsafe_allow_html=True)
 
@@ -156,14 +139,6 @@ def get_user_input():
         'TotalServices': [TotalServices]
     })
     
-    # Ensure columns match model expectations
-    if expected_features is not None:
-        missing_cols = set(expected_features) - set(data.columns)
-        if missing_cols:
-            for col in missing_cols:
-                data[col] = 0  # Add missing columns with default value
-        data = data[expected_features]  # Reorder columns
-    
     return data
 
 # ============== Prediction Logic ==============
@@ -185,9 +160,6 @@ def make_prediction(input_df):
         return prediction_proba, prediction
     except Exception as e:
         st.error(f"Prediction failed: {str(e)}")
-        st.error(f"Input data columns: {input_df.columns.tolist()}")
-        if hasattr(model, 'feature_names_in_'):
-            st.error(f"Model expects columns: {model.feature_names_in_.tolist()}")
         return None, None
 
 # ============== Main App Logic ==============
@@ -260,38 +232,12 @@ def main():
                 st.plotly_chart(fig, use_container_width=True)
 
                 # Log performance (simulating ground truth)
-                # Ask user to provide ground truth after prediction
-                # Ask user for actual (ground truth) label
-                # Ask user for actual (ground truth) label
-                ground_truth_label = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
-                
-                # Convert to binary
-                ground_truth_binary = 0 if ground_truth_label == "Stayed" else 1
-                
-                # Log performance
-                monitor.log_performance([ground_truth_binary], [prediction])
-                
-                # Debug display
-                st.success("✅ Performance logged successfully.")
-                st.write("📊 Current Performance History:", monitor.performance_history)
+                ground_truth = 1 if prediction_proba > 0.7 else 0
+                monitor.log_performance([ground_truth], [prediction])
 
-
-                # Log to MLflow
-                try:
-                    mlflow.set_tracking_uri("http://127.0.0.1:5000/")
-                    mlflow.set_experiment("Churn_Prediction_App")
-                    
-                    with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-                        mlflow.log_params(input_df.iloc[0].to_dict())
-                        mlflow.log_metric("prediction_proba", float(prediction_proba))
-                        mlflow.log_metric("prediction_class", int(prediction))
-                        
-                        if len(monitor.performance_history) > 0:
-                            latest = monitor.performance_history[-1]
-                            mlflow.log_metric("accuracy", latest['accuracy'])
-                            mlflow.log_metric("f1_score", latest['f1_score'])
-                except Exception as e:
-                    st.warning(f"MLflow logging failed: {str(e)}")
+                # ✅ هنا تحطها
+                st.write("✅ DEBUG - Current Performance History:")
+                st.write(monitor.performance_history)
 
     # Footer
     st.markdown("---")
