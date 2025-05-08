@@ -4,19 +4,15 @@ import pickle
 import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
 import mlflow
-import datetime
 import os
-from monitoring import generate_drift_report
+import datetime
 
-# تحميل النموذج النهائي من MLflow (بدلاً من pickle)
-mlflow.set_tracking_uri("http://localhost:5000")  # Change if you're using a remote server
-mlflow.set_experiment("Churn_Prediction_App")
+# Load model and threshold
+with open("final_stacked_model.pkl", "rb") as f:
+    model_data = pickle.load(f)
 
-# قراءة النموذج والتفاصيل من MLflow
-with mlflow.start_run(run_id="3cb4563a1b054bf68277581e14f8cbbb"):  # استخدم Run ID الخاص بك هنا
-    model_data = mlflow.artifacts.download_artifacts("final_stacked_model.pkl")
-    model = pickle.load(open(model_data, "rb"))
-    threshold = model_data["threshold"]
+model = model_data["model"]
+threshold = model_data["threshold"]
 
 # Page configuration
 st.set_page_config(page_title="Churn Prediction App", layout="centered")
@@ -66,7 +62,7 @@ def user_input():
     })
     return data
 
-# Label Encoding
+# Function to encode the input data
 def encode_input_data(input_df):
     le = LabelEncoder()
     columns_to_encode = ['Partner', 'Dependents', 'InternetService', 'OnlineSecurity', 
@@ -79,20 +75,15 @@ def encode_input_data(input_df):
     return input_df
 
 input_df = user_input()
-# تأكد من وجود مجلدات التخزين
-os.makedirs("data/user_inputs", exist_ok=True)
 
-# احفظ الإدخال الحالي
-input_df.to_csv("data/user_inputs/latest_input.csv", index=False)
-
+# Encode the input data
 encoded_input_df = encode_input_data(input_df)
 
-# Prediction and MLOps Logging
+# Prediction
 if st.button("🔍 Predict Now"):
     prediction_proba = model.predict_proba(encoded_input_df)[0][1]
     prediction = 1 if prediction_proba >= threshold else 0
 
-    # Show Result
     st.subheader("📊 Result:")
     if prediction == 1:
         st.error(f"🚨 The customer is likely to churn with a probability of {prediction_proba:.2%}")
@@ -109,22 +100,19 @@ if st.button("🔍 Predict Now"):
     fig.update_layout(title="Churn Probability", width=500, height=400)
     st.plotly_chart(fig)
 
-    # Save input data for monitoring
+    # Save the input data
     os.makedirs("data/user_inputs", exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     input_path = f"data/user_inputs/input_{timestamp}.csv"
     input_df.to_csv(input_path, index=False)
 
-    # 📉 Generate Drift Report
-    reference_data = pd.read_csv("data/reference_data.csv")
-    current_data = input_df  # current input
-    drift_path = generate_drift_report(reference_data, current_data)  # assume returns "data/drift_report.html"
-
-    # 🔗 Show Drift Report Link
-    st.markdown("📉 [View Data Drift Report](data/drift_report.html)", unsafe_allow_html=True)
-
     # MLflow Logging
+    mlflow.set_tracking_uri("http://localhost:5000")  # Change if you're using a remote server
+    mlflow.set_experiment("Churn_Prediction_App")
+
     with mlflow.start_run(run_name="User_Prediction"):
         mlflow.log_params(encoded_input_df.to_dict(orient="records")[0])
         mlflow.log_metric("prediction_proba", float(prediction_proba))
         mlflow.log_metric("prediction_class", int(prediction))
+        
+    st.success("🔄 Prediction logged with MLflow!")
