@@ -32,97 +32,124 @@ st.markdown("""
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
         body, .stApp {
-            background-color: #ffffff;
+            background-color: #f8f9fa;  /* لون خلفية فاتح */
             font-family: 'Poppins', sans-serif;
-            color: #333333;
+            color: #2d3748;  /* لون نص داكن للقراءة الواضحة */
         }
 
-        /* العنوان */
+        /* العنوان الرئيسي */
         .title-text {
             font-size: 2.7rem !important;
             font-weight: 600;
-            color: #5A189A;
+            color: #5e35b1;  /* بنفسجي غامق أنيق */
             text-align: center;
             margin-bottom: 0.3rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
         }
 
+        /* العنوان الفرعي */
         .subtitle-text {
             font-size: 1.1rem !important;
-            color: #6c757d;
+            color: #4a5568;  /* رمادي غامق */
             text-align: center;
             margin-bottom: 2rem;
         }
 
         /* الأزرار */
         .stButton>button {
-            background: linear-gradient(90deg, #7209b7, #4361ee) !important;
+            background: linear-gradient(90deg, #6a11cb, #2575fc) !important;
             color: white !important;
             font-weight: 600;
-            border: none;
-            border-radius: 10px;
-            padding: 0.6rem 1.2rem;
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 0.6rem 1.2rem !important;
             font-family: 'Poppins', sans-serif;
-            transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
         }
 
         .stButton>button:hover {
-            background: linear-gradient(90deg, #560bad, #4895ef) !important;
-            transform: scale(1.03);
-            box-shadow: 0 4px 10px rgba(72, 149, 239, 0.3);
+            background: linear-gradient(90deg, #5a0cb3, #1a64f0) !important;
+            transform: scale(1.03) !important;
+            box-shadow: 0 4px 12px rgba(39, 117, 252, 0.2) !important;
         }
 
-        /* المدخلات */
+        /* حاويات الإدخال */
         .input-container {
-            background-color: #fdfdfd;
+            background-color: #ffffff;  /* أبيض نقي */
             border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
-            border: 1px solid #e3e6f0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;  /* حد فاتح */
             margin-bottom: 1.5rem;
         }
 
         /* مربع النجاح */
         .success-box {
-            background: #d1fae5;
+            background: #f0fdf4;  /* أخضر فاتح */
             border-left: 6px solid #10b981;
             padding: 1.2rem;
             border-radius: 8px;
             color: #065f46;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
         }
 
         /* مربع التحذير */
         .danger-box {
-            background: #fee2e2;
+            background: #fef2f2;  /* أحمر فاتح */
             border-left: 6px solid #ef4444;
             padding: 1.2rem;
             border-radius: 8px;
             color: #991b1b;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
         }
 
-        /* الـ Selectbox */
-        div[data-baseweb="select"] {
+        /* عناصر الإدخال */
+        div[data-baseweb="select"], 
+        .stTextInput input, 
+        .stNumberInput input {
             background-color: white !important;
             border-radius: 8px !important;
             border: 1px solid #d1d5db !important;
+            transition: border-color 0.3s ease !important;
         }
 
-        /* رقم الإدخال */
-        .stNumberInput input {
-            border-radius: 8px !important;
-            border: 1px solid #d1d5db !important;
+        div[data-baseweb="select"]:hover,
+        .stTextInput input:hover,
+        .stNumberInput input:hover {
+            border-color: #9ca3af !important;
         }
 
-        /* سلايدر */
+        /* السلايدر */
         .stSlider .thumb {
-            background-color: #7209b7 !important;
+            background-color: #6a11cb !important;
+            border: 2px solid white !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
         }
 
         .stSlider .track {
-            background: linear-gradient(90deg, #7209b7, #4895ef) !important;
+            background: linear-gradient(90deg, #e0e7ff, #c7d2fe) !important;
+            height: 6px !important;
+        }
+
+        /* التبويبات */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 10px;
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            background: #edf2f7 !important;
+            border-radius: 8px !important;
+            padding: 10px 20px !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .stTabs [aria-selected="true"] {
+            background: #6a11cb !important;
+            color: white !important;
         }
     </style>
 """, unsafe_allow_html=True)
-
 
 # App header
 col1, col2, col3 = st.columns([1,3,1])
