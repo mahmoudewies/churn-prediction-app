@@ -259,12 +259,15 @@ def main():
 
                 # Log performance (simulating ground truth)
                 # Ask user to provide ground truth after prediction
-                st.markdown("#### ✅ Please provide actual outcome for this customer:")
-                ground_truth = st.radio("Did the customer actually churn?", [1, 0], index=1, horizontal=True)
+                # Ask user for actual (ground truth) label
+                ground_truth = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
                 
-                # Log actual vs predicted
-                monitor.log_performance([ground_truth], [prediction])
-                st.write(monitor.performance_history)
+                # Convert to binary
+                ground_truth_binary = 0 if ground_truth == "Stayed" else 1
+                
+                # Log performance
+                monitor.log_performance([ground_truth_binary], [prediction])
+
 
                 # Log to MLflow
                 try:
