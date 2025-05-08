@@ -31,87 +31,98 @@ st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
-        /* App background */
-        .stApp {
-            background-color: #ffffff !important;
+        body, .stApp {
+            background-color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            color: #333333;
         }
 
-        /* Title and subtitle */
+        /* العنوان */
         .title-text {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2.5rem !important;
-            font-weight: 600 !important;
-            color: #343a40 !important;
+            font-size: 2.7rem !important;
+            font-weight: 600;
+            color: #5A189A;
             text-align: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
         }
 
         .subtitle-text {
-            font-family: 'Poppins', sans-serif;
             font-size: 1.1rem !important;
-            color: #6c757d !important;
+            color: #6c757d;
             text-align: center;
             margin-bottom: 2rem;
         }
 
-        /* Buttons */
+        /* الأزرار */
         .stButton>button {
-            background: linear-gradient(45deg, #5f72be, #9b23ea) !important;
+            background: linear-gradient(90deg, #7209b7, #4361ee) !important;
             color: white !important;
-            font-weight: 600 !important;
-            border-radius: 8px !important;
-            padding: 10px 20px !important;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            padding: 0.6rem 1.2rem;
             font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease-in-out;
         }
 
         .stButton>button:hover {
-            transform: scale(1.03) !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+            background: linear-gradient(90deg, #560bad, #4895ef) !important;
+            transform: scale(1.03);
+            box-shadow: 0 4px 10px rgba(72, 149, 239, 0.3);
         }
 
-        /* Input container */
+        /* المدخلات */
         .input-container {
-            background-color: #f1f3f5 !important;
-            border-radius: 10px;
+            background-color: #fdfdfd;
+            border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e3e6f0;
             margin-bottom: 1.5rem;
-            border: 1px solid #dee2e6;
         }
 
-        /* Boxes */
+        /* مربع النجاح */
         .success-box {
-            background: #d4edda !important;
-            color: #155724 !important;
-            padding: 1.5rem !important;
-            border-radius: 10px !important;
-            border: 1px solid #c3e6cb;
+            background: #d1fae5;
+            border-left: 6px solid #10b981;
+            padding: 1.2rem;
+            border-radius: 8px;
+            color: #065f46;
         }
 
+        /* مربع التحذير */
         .danger-box {
-            background: #f8d7da !important;
-            color: #721c24 !important;
-            padding: 1.5rem !important;
-            border-radius: 10px !important;
-            border: 1px solid #f5c6cb;
+            background: #fee2e2;
+            border-left: 6px solid #ef4444;
+            padding: 1.2rem;
+            border-radius: 8px;
+            color: #991b1b;
         }
 
-        /* Inputs */
-        .stSelectbox div[data-baseweb="select"], 
+        /* الـ Selectbox */
+        div[data-baseweb="select"] {
+            background-color: white !important;
+            border-radius: 8px !important;
+            border: 1px solid #d1d5db !important;
+        }
+
+        /* رقم الإدخال */
         .stNumberInput input {
             border-radius: 8px !important;
-            border: 1px solid #ced4da !important;
+            border: 1px solid #d1d5db !important;
         }
 
+        /* سلايدر */
         .stSlider .thumb {
-            background-color: #6f42c1 !important;
+            background-color: #7209b7 !important;
         }
 
         .stSlider .track {
-            background: linear-gradient(90deg, #6f42c1, #9b59b6) !important;
+            background: linear-gradient(90deg, #7209b7, #4895ef) !important;
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 # App header
 col1, col2, col3 = st.columns([1,3,1])
