@@ -35,7 +35,9 @@ class ModelMonitor:
         if len(self.performance_history) > 5 and np.mean([x['f1_score'] for x in self.performance_history[-5:]]) < 0.7:
             st.sidebar.error("🚨 Alert: Model performance degradation detected!")
 
-monitor = ModelMonitor()
+if "monitor" not in st.session_state:
+    st.session_state["monitor"] = ModelMonitor()
+monitor = st.session_state["monitor"]
 
 # ============== Retraining Strategy ==============
 def retrain_model():
