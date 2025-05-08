@@ -30,22 +30,22 @@ threshold = model_data["threshold"]
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-        
-        /* Main app background */
+
+        /* App background */
         .stApp {
-            background-color: #f8f9fa !important;
+            background-color: #ffffff !important;
         }
-        
-        /* Titles styling */
+
+        /* Title and subtitle */
         .title-text {
             font-family: 'Poppins', sans-serif;
             font-size: 2.5rem !important;
             font-weight: 600 !important;
-            color: #4a00e0 !important;
+            color: #343a40 !important;
             text-align: center;
             margin-bottom: 0.5rem;
         }
-        
+
         .subtitle-text {
             font-family: 'Poppins', sans-serif;
             font-size: 1.1rem !important;
@@ -53,70 +53,62 @@ st.markdown("""
             text-align: center;
             margin-bottom: 2rem;
         }
-        
-        /* Buttons styling */
+
+        /* Buttons */
         .stButton>button {
-            background: linear-gradient(45deg, #4a00e0 0%, #8e2de2 100%) !important;
+            background: linear-gradient(45deg, #5f72be, #9b23ea) !important;
             color: white !important;
             font-weight: 600 !important;
-            border: none !important;
             border-radius: 8px !important;
             padding: 10px 20px !important;
-            transition: all 0.3s ease !important;
             font-family: 'Poppins', sans-serif;
         }
-        
+
         .stButton>button:hover {
             transform: scale(1.03) !important;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
         }
-        
-        /* Input containers */
+
+        /* Input container */
         .input-container {
-            background-color: white !important;
+            background-color: #f1f3f5 !important;
             border-radius: 10px;
             padding: 1.5rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             margin-bottom: 1.5rem;
-            border: 1px solid #e9ecef;
+            border: 1px solid #dee2e6;
         }
-        
-        /* Success and warning boxes */
+
+        /* Boxes */
         .success-box {
-            background: linear-gradient(45deg, #00b09b, #96c93d) !important;
-            color: white !important;
+            background: #d4edda !important;
+            color: #155724 !important;
             padding: 1.5rem !important;
             border-radius: 10px !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05) !important;
+            border: 1px solid #c3e6cb;
         }
-        
+
         .danger-box {
-            background: linear-gradient(45deg, #ff416c, #ff4b2b) !important;
-            color: white !important;
+            background: #f8d7da !important;
+            color: #721c24 !important;
             padding: 1.5rem !important;
             border-radius: 10px !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05) !important;
+            border: 1px solid #f5c6cb;
         }
-        
-        /* Slider styling */
-        .stSlider .thumb {
-            background-color: #4a00e0 !important;
-        }
-        
-        .stSlider .track {
-            background: linear-gradient(90deg, #4a00e0, #8e2de2) !important;
-        }
-        
-        /* Select box styling */
-        .stSelectbox div[data-baseweb="select"] {
-            border-radius: 8px !important;
-            border: 1px solid #ced4da !important;
-        }
-        
-        /* Number input styling */
+
+        /* Inputs */
+        .stSelectbox div[data-baseweb="select"], 
         .stNumberInput input {
             border-radius: 8px !important;
             border: 1px solid #ced4da !important;
+        }
+
+        .stSlider .thumb {
+            background-color: #6f42c1 !important;
+        }
+
+        .stSlider .track {
+            background: linear-gradient(90deg, #6f42c1, #9b59b6) !important;
         }
     </style>
 """, unsafe_allow_html=True)
