@@ -260,6 +260,7 @@ def main():
                 # Log performance (simulating ground truth)
                 ground_truth = 1 if prediction_proba > 0.7 else 0
                 monitor.log_performance([ground_truth], [prediction])
+                st.write(monitor.performance_history)
 
                 # Log to MLflow
                 try:
