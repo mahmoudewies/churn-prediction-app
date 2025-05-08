@@ -5,15 +5,17 @@ import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
 import mlflow
 import time
+import streamlit as st
 
-# Page configuration must be the first Streamlit command
+# MUST be the first command
 st.set_page_config(
-    page_title="✨ Churn Prediction App",
+    page_title="My App",
     layout="centered",
-    page_icon="🔮",
-    initial_sidebar_state="expanded",
-    default_theme="light"
+    initial_sidebar_state="auto"
 )
+
+# Only after page config you can do other stuff
+st.title("My App")
 
 # Load model and threshold (must come after set_page_config)
 with open("final_stacked_model.pkl", "rb") as f:
