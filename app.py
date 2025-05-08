@@ -6,14 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 import mlflow
 import time
 
-# Load model and threshold
-with open("final_stacked_model.pkl", "rb") as f:
-    model_data = pickle.load(f)
-
-model = model_data["model"]
-threshold = model_data["threshold"]
-
-# Page configuration with light theme
+# Page configuration must be the first Streamlit command
 st.set_page_config(
     page_title="✨ Churn Prediction App",
     layout="centered",
@@ -21,6 +14,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     default_theme="light"
 )
+
+# Load model and threshold (must come after set_page_config)
+with open("final_stacked_model.pkl", "rb") as f:
+    model_data = pickle.load(f)
+
+model = model_data["model"]
+threshold = model_data["threshold"]
 
 # Custom CSS for light mode styling
 st.markdown("""
