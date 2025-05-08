@@ -8,9 +8,10 @@ h1, h2, h3, label, .st-bb, .st-dh {
     color: #2d2f81 !important;
 }
 
-.stSelectbox, .stNumberInput, .stSlider {
+.stSelectbox, .stNumberInput, .stSlider, .stTextInput, .stTextArea, .stMultiSelect, .stRadio, .stCheckbox, .stDateInput, .stTimeInput, .stFileUploader, .stColorPicker {
     background-color: #aca8dc !important;
     border-radius: 10px;
+    color: #2d2f81 !important;
 }
 
 .main-title {
@@ -19,6 +20,7 @@ h1, h2, h3, label, .st-bb, .st-dh {
     color: #2d2f81;
     font-weight: bold;
     margin-bottom: 20px;
+    font-family: 'Kicker Trial Black', sans-serif;
 }
 
 .center-gif {
@@ -26,6 +28,7 @@ h1, h2, h3, label, .st-bb, .st-dh {
     margin-left: auto;
     margin-right: auto;
     width: 220px;
+    border-radius: 20px;
 }
 
 .header-container {
@@ -46,6 +49,7 @@ h1, h2, h3, label, .st-bb, .st-dh {
 .stButton > button:hover {
     background-color: #aca8dc;
     color: #2d2f81;
+    transform: scale(1.05);
 }
 
 .prediction-bubble {
@@ -55,6 +59,7 @@ h1, h2, h3, label, .st-bb, .st-dh {
     margin: 20px auto;
     width: 90%;
     animation: fadeIn 1s ease-in-out;
+    text-align: center;
 }
 
 .prediction-bubble.success {
@@ -70,4 +75,14 @@ h1, h2, h3, label, .st-bb, .st-dh {
 @keyframes fadeIn {
     0% {opacity: 0; transform: scale(0.95);}
     100% {opacity: 1; transform: scale(1);}
+}
+
+/* مسافات بين العناصر */
+.block-container {
+    padding: 2rem 1rem 2rem 1rem;
+}
+
+/* حركة خفيفة عند الظهور */
+section[data-testid="stSidebar"] div {
+    animation: fadeIn 1s ease-in-out;
 }
