@@ -17,91 +17,22 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ============== Custom CSS ==============
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-        
-        body, .stApp {
-            background-color: #121212;
-            color: #f0f0f0;
-            font-family: 'Poppins', sans-serif;
-        }
-        
-        .title-text {
-            font-size: 2.7rem !important;
-            font-weight: 600;
-            color: #bb86fc;
-            text-align: center;
-            margin-bottom: 0.3rem;
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
-        }
-        
-        .subtitle-text {
-            font-size: 1.1rem !important;
-            color: #d1c4e9;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
-        .danger-box {
-            background-color: #1e1e1e;
-            border-left: 5px solid #ff416c;
-            padding: 1rem;
-            border-radius: 5px;
-            margin: 1rem 0;
-        }
-        
-        .success-box {
-            background-color: #1e1e1e;
-            border-left: 5px solid #00b09b;
-            padding: 1rem;
-            border-radius: 5px;
-            margin: 1rem 0;
-        }
-        
-        .input-container {
-            background-color: #1e1e1e;
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-        }
-        
-        .stButton>button {
-            background-color: #bb86fc;
-            color: #121212;
-            font-weight: 600;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            width: 100%;
-            transition: all 0.3s;
-        }
-        
-        .stButton>button:hover {
-            background-color: #9a67ea;
-            transform: translateY(-2px);
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # ============== Model Monitoring ==============
 class ModelMonitor:
     def __init__(self):
-        if "performance_history" not in st.session_state:
-            st.session_state.performance_history = []
+        self.performance_history = []
         
     def log_performance(self, y_true, y_pred):
         accuracy = accuracy_score(y_true, y_pred)
         f1 = f1_score(y_true, y_pred)
         
-        st.session_state.performance_history.append({
+        self.performance_history.append({
             'timestamp': datetime.now(),
             'accuracy': accuracy,
             'f1_score': f1
         })
         
-        if len(st.session_state.performance_history) > 5 and np.mean([x['f1_score'] for x in st.session_state.performance_history[-5:]]) < 0.7:
+        if len(self.performance_history) > 5 and np.mean([x['f1_score'] for x in self.performance_history[-5:]]) < 0.7:
             st.sidebar.error("🚨 Alert: Model performance degradation detected!")
 
 if "monitor" not in st.session_state:
@@ -137,6 +68,37 @@ try:
     expected_features = model.feature_names_in_
 except AttributeError:
     expected_features = None
+
+# ============== Custom CSS ==============
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+        
+        body, .stApp {
+            background-color: #121212;
+            color: #f0f0f0;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .title-text {
+            font-size: 2.7rem !important;
+            font-weight: 600;
+            color: #bb86fc;
+            text-align: center;
+            margin-bottom: 0.3rem;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+        }
+        
+        .subtitle-text {
+            font-size: 1.1rem !important;
+            color: #d1c4e9;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        /* ... (بقية أنماط CSS الخاصة بك كما هي) ... */
+    </style>
+""", unsafe_allow_html=True)
 
 # ============== App Header ==============
 col1, col2, col3 = st.columns([1,3,1])
@@ -237,36 +199,11 @@ def main():
     if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
         st.subheader("Model Performance Monitoring")
         
-        if "chart_container" not in st.session_state:
-            st.session_state.chart_container = st.empty()
-        
-        if len(st.session_state.performance_history) == 0:
+        if len(monitor.performance_history) == 0:
             st.info("No performance data yet. Make some predictions first.")
         else:
-            perf_df = pd.DataFrame(st.session_state.performance_history)
-            
-            # Create Plotly figure
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=perf_df['timestamp'],
-                y=perf_df['accuracy'],
-                name='Accuracy',
-                line=dict(color='#00b09b')
-            ))
-            fig.add_trace(go.Scatter(
-                x=perf_df['timestamp'],
-                y=perf_df['f1_score'],
-                name='F1 Score',
-                line=dict(color='#bb86fc')
-            ))
-            fig.update_layout(
-                title="Model Performance Over Time",
-                xaxis_title="Time",
-                yaxis_title="Score",
-                hovermode="x unified"
-            )
-            
-            st.session_state.chart_container.plotly_chart(fig, use_container_width=True)
+            perf_df = pd.DataFrame(monitor.performance_history)
+            st.line_chart(perf_df.set_index('timestamp'))
             
             latest = perf_df.iloc[-1]
             col1, col2 = st.columns(2)
@@ -333,6 +270,7 @@ def main():
                 # Log performance
                 monitor.log_performance([ground_truth_binary], [prediction])
 
+
                 # Log to MLflow
                 try:
                     mlflow.set_tracking_uri("http://127.0.0.1:5000/")
@@ -343,8 +281,8 @@ def main():
                         mlflow.log_metric("prediction_proba", float(prediction_proba))
                         mlflow.log_metric("prediction_class", int(prediction))
                         
-                        if len(st.session_state.performance_history) > 0:
-                            latest = st.session_state.performance_history[-1]
+                        if len(monitor.performance_history) > 0:
+                            latest = monitor.performance_history[-1]
                             mlflow.log_metric("accuracy", latest['accuracy'])
                             mlflow.log_metric("f1_score", latest['f1_score'])
                 except Exception as e:
