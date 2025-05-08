@@ -86,14 +86,6 @@ def retrain_model():
                 st.success("Model retrained and saved successfully!")
                 st.balloons()
 
-                # تسجيل التدريب في MLflow
-                mlflow.set_experiment("Churn_Model_Training")
-                with mlflow.start_run(run_name="Retraining_Run"):
-                    mlflow.log_param("model_type", "RandomForestClassifier")
-                    mlflow.log_metric("accuracy", acc)
-                    mlflow.log_metric("f1_score", f1)
-                    mlflow.log_artifact("final_stacked_model.pkl")
-
 # Display GIF in the center
 st.markdown("""
     <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
