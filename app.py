@@ -35,7 +35,10 @@ class ModelMonitor:
         if len(self.performance_history) > 5 and np.mean([x['f1_score'] for x in self.performance_history[-5:]]) < 0.7:
             st.sidebar.error("🚨 Alert: Model performance degradation detected!")
 
-monitor = ModelMonitor()
+if "monitor" not in st.session_state:
+    st.session_state["monitor"] = ModelMonitor()
+
+monitor = st.session_state["monitor"]
 
 # ============== Retraining Strategy ==============
 def retrain_model():
@@ -46,12 +49,25 @@ def retrain_model():
                 st.success("Model retrained successfully!")
                 st.balloons()
 
+# Display GIF in the center
+st.markdown("""
+    <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
+        <img src="https://raw.githubusercontent.com/mahmoudewies/churn-prediction-app/main/Pay%20Per%20Click%20Digital%20Marketing%20(1).gif" alt="GIF" width="600">
+    </div>
+""", unsafe_allow_html=True)
+
 # Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
     model_data = pickle.load(f)
 
 model = model_data["model"]
 threshold = model_data["threshold"]
+
+# Get expected features from the model (if available)
+try:
+    expected_features = model.feature_names_in_
+except AttributeError:
+    expected_features = None
 
 # ============== Custom CSS ==============
 st.markdown("""
@@ -79,45 +95,77 @@ st.markdown("""
             text-align: center;
             margin-bottom: 2rem;
         }
+        
+        /* ... (بقية أنماط CSS الخاصة بك كما هي) ... */
     </style>
 """, unsafe_allow_html=True)
 
 # ============== App Header ==============
-col1, col2, col3 = st.columns([1,3,1])
+col1, col2, col3 = st.columns([1, 3, 1])
 with col2:
     st.markdown('<h1 class="title-text">✨ Churn Prediction Wizard</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle-text">Predict customer churn with machine learning precision</p>', unsafe_allow_html=True)
 
 # ============== Input Form ==============
 def get_user_input():
+    # تأكد من تخزين المدخلات في session_state
+    if 'SeniorCitizen' not in st.session_state:
+        st.session_state['SeniorCitizen'] = 0
+    if 'Partner' not in st.session_state:
+        st.session_state['Partner'] = 'No'
+    if 'Dependents' not in st.session_state:
+        st.session_state['Dependents'] = 'No'
+    if 'tenure' not in st.session_state:
+        st.session_state['tenure'] = 12
+    # كرر نفس العملية لبقية المدخلات (الخصائص الأخرى)
+
     with st.container():
         st.markdown('<div class="input-container">', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         
         with col1:
-            SeniorCitizen = st.selectbox("Is the customer a senior citizen?", [0, 1], key="senior")
-            Partner = st.selectbox("Has a partner?", ["Yes", "No"], key="partner")
-            Dependents = st.selectbox("Has dependents?", ["Yes", "No"], key="dependents")
-            tenure = st.slider("Tenure (months)", 0, 72, 12, key="tenure")
-            InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"], key="internet")
-            OnlineSecurity = st.selectbox("Online Security", ["Yes", "No", "No internet service"], key="security")
-            OnlineBackup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"], key="backup")
-            DeviceProtection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"], key="device")
-            
+            SeniorCitizen = st.selectbox("Is the customer a senior citizen?", [0, 1], key="senior", index=st.session_state['SeniorCitizen'])
+            Partner = st.selectbox("Has a partner?", ["Yes", "No"], key="partner", index=["Yes", "No"].index(st.session_state['Partner']))
+            Dependents = st.selectbox("Has dependents?", ["Yes", "No"], key="dependents", index=["Yes", "No"].index(st.session_state['Dependents']))
+            tenure = st.slider("Tenure (months)", 0, 72, st.session_state['tenure'], key="tenure")
+            InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"], key="internet", index=["DSL", "Fiber optic", "No"].index(st.session_state.get('InternetService', "No")))
+            OnlineSecurity = st.selectbox("Online Security", ["Yes", "No", "No internet service"], key="security", index=["Yes", "No", "No internet service"].index(st.session_state.get('OnlineSecurity', "No internet service")))
+            OnlineBackup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"], key="backup", index=["Yes", "No", "No internet service"].index(st.session_state.get('OnlineBackup', "No internet service")))
+            DeviceProtection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"], key="device", index=["Yes", "No", "No internet service"].index(st.session_state.get('DeviceProtection', "No internet service")))
+        
         with col2:
-            TechSupport = st.selectbox("Tech Support", ["Yes", "No", "No internet service"], key="tech")
-            StreamingTV = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"], key="stream_tv")
-            StreamingMovies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"], key="stream_movies")
-            Contract = st.selectbox("Contract Type", ["Month-to-month", "One year", "Two year"], key="contract")
-            PaperlessBilling = st.selectbox("Paperless Billing?", ["Yes", "No"], key="paperless")
+            TechSupport = st.selectbox("Tech Support", ["Yes", "No", "No internet service"], key="tech", index=["Yes", "No", "No internet service"].index(st.session_state.get('TechSupport', "No internet service")))
+            StreamingTV = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"], key="stream_tv", index=["Yes", "No", "No internet service"].index(st.session_state.get('StreamingTV', "No internet service")))
+            StreamingMovies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"], key="stream_movies", index=["Yes", "No", "No internet service"].index(st.session_state.get('StreamingMovies', "No internet service")))
+            Contract = st.selectbox("Contract Type", ["Month-to-month", "One year", "Two year"], key="contract", index=["Month-to-month", "One year", "Two year"].index(st.session_state.get('Contract', "Month-to-month")))
+            PaperlessBilling = st.selectbox("Paperless Billing?", ["Yes", "No"], key="paperless", index=["Yes", "No"].index(st.session_state.get('PaperlessBilling', "No")))
             PaymentMethod = st.selectbox("Payment Method", [
                 "Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"
-            ], key="payment")
-            MonthlyCharges = st.number_input("Monthly Charges ($)", min_value=0.0, format="%.2f", key="monthly")
-            TotalCharges = st.number_input("Total Charges ($)", min_value=0.0, format="%.2f", key="total")
-            TotalServices = st.slider("Total Services Used", 0, 10, 5, key="services")
+            ], key="payment", index=["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"].index(st.session_state.get('PaymentMethod', "Electronic check")))
+            MonthlyCharges = st.number_input("Monthly Charges ($)", min_value=0.0, format="%.2f", key="monthly", value=st.session_state.get('MonthlyCharges', 50.0))
+            TotalCharges = st.number_input("Total Charges ($)", min_value=0.0, format="%.2f", key="total", value=st.session_state.get('TotalCharges', 1000.0))
+            TotalServices = st.slider("Total Services Used", 0, 10, st.session_state.get('TotalServices', 5), key="services")
         
         st.markdown('</div>', unsafe_allow_html=True)
+
+    # تخزين المدخلات في session_state لتجنب اختفائها بعد التحديث
+    st.session_state['SeniorCitizen'] = SeniorCitizen
+    st.session_state['Partner'] = Partner
+    st.session_state['Dependents'] = Dependents
+    st.session_state['tenure'] = tenure
+    st.session_state['InternetService'] = InternetService
+    st.session_state['OnlineSecurity'] = OnlineSecurity
+    st.session_state['OnlineBackup'] = OnlineBackup
+    st.session_state['DeviceProtection'] = DeviceProtection
+    st.session_state['TechSupport'] = TechSupport
+    st.session_state['StreamingTV'] = StreamingTV
+    st.session_state['StreamingMovies'] = StreamingMovies
+    st.session_state['Contract'] = Contract
+    st.session_state['PaperlessBilling'] = PaperlessBilling
+    st.session_state['PaymentMethod'] = PaymentMethod
+    st.session_state['MonthlyCharges'] = MonthlyCharges
+    st.session_state['TotalCharges'] = TotalCharges
+    st.session_state['TotalServices'] = TotalServices
 
     data = pd.DataFrame({
         'SeniorCitizen': [SeniorCitizen],
@@ -139,6 +187,14 @@ def get_user_input():
         'TotalServices': [TotalServices]
     })
     
+    # Ensure columns match model expectations
+    if expected_features is not None:
+        missing_cols = set(expected_features) - set(data.columns)
+        if missing_cols:
+            for col in missing_cols:
+                data[col] = 0  # Add missing columns with default value
+        data = data[expected_features]  # Reorder columns
+    
     return data
 
 # ============== Prediction Logic ==============
@@ -151,101 +207,29 @@ def make_prediction(input_df):
         input_df[col] = le.fit_transform(input_df[col])
     
     # Ensure numeric types
-    input_df = input_df.astype(float)
+    numeric_cols = input_df.select_dtypes(exclude=['object']).columns
+    input_df[numeric_cols] = input_df[numeric_cols].apply(pd.to_numeric, errors='coerce')
     
-    # Predict
-    try:
-        prediction_proba = model.predict_proba(input_df)[0][1]
-        prediction = 1 if prediction_proba >= threshold else 0
-        return prediction_proba, prediction
-    except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
-        return None, None
+    # Make prediction
+    pred_proba = model.predict_proba(input_df)[:, 1]
+    return pred_proba
 
-# ============== Main App Logic ==============
-def main():
-    retrain_model()
-    
-    # Model Monitoring Dashboard
-    if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
-        st.subheader("Model Performance Monitoring")
-        
-        if len(monitor.performance_history) == 0:
-            st.info("No performance data yet. Make some predictions first.")
-        else:
-            perf_df = pd.DataFrame(monitor.performance_history)
-            st.line_chart(perf_df.set_index('timestamp'))
-            
-            latest = perf_df.iloc[-1]
-            col1, col2 = st.columns(2)
-            col1.metric("Latest Accuracy", f"{latest['accuracy']:.2%}")
-            col2.metric("Latest F1 Score", f"{latest['f1_score']:.2%}")
+# ============== Display Predictions ==============
+user_data = get_user_input()
+prediction_proba = make_prediction(user_data)
 
-    # Get user input
-    input_df = get_user_input()
+if prediction_proba >= threshold:
+    prediction = "Yes"
+    prediction_color = "#FF6F61"
+else:
+    prediction = "No"
+    prediction_color = "#4CAF50"
 
-    # Prediction button
-    if st.button("✨ Predict Churn Probability", key="predict_btn"):
-        with st.spinner('Analyzing customer data...'):
-            time.sleep(1.5)
-            
-            prediction_proba, prediction = make_prediction(input_df.copy())
+# Log the performance of the model
+monitor.log_performance([1], [prediction == "Yes"])
 
-            if prediction is not None:
-                # Display results
-                if prediction == 1:
-                    st.markdown(f"""
-                        <div class="danger-box">
-                            <h2 style='text-align:center;margin-bottom:0.5rem'>🚨 High Churn Risk</h2>
-                            <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                                Probability: {prediction_proba:.2%}
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.balloons()
-                else:
-                    st.markdown(f"""
-                        <div class="success-box">
-                            <h2 style='text-align:center;margin-bottom:0.5rem'>✅ Loyal Customer</h2>
-                            <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                                Retention Probability: {(1-prediction_proba):.2%}
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.snow()
+# Show the result
+st.markdown(f"<h3 style='text-align: center; color: {prediction_color};'>Will this customer churn? {prediction}</h3>", unsafe_allow_html=True)
 
-                # Visualization
-                fig = go.Figure(data=[go.Pie(
-                    labels=['Will Stay', 'Will Churn'],
-                    values=[1-prediction_proba, prediction_proba],
-                    marker_colors=['#00b09b', '#ff416c'],
-                    hole=0.5,
-                    textinfo='percent+label'
-                )])
-                
-                fig.update_layout(
-                    showlegend=False,
-                    margin=dict(t=30, b=0),
-                    height=300
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-
-                # Log performance (simulating ground truth)
-                ground_truth = 1 if prediction_proba > 0.7 else 0
-                monitor.log_performance([ground_truth], [prediction])
-
-                # ✅ هنا تحطها
-                st.write("✅ DEBUG - Current Performance History:")
-                st.write(monitor.performance_history)
-
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-        <div style='text-align:center;color:#6c757d;font-size:0.9rem'>
-            <p>🔮 Predictive Analytics | 📊 Customer Insights | 🤖 ML Powered</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
+# Trigger retraining if required
+retrain_model()
