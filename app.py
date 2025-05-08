@@ -258,7 +258,11 @@ def main():
                 st.plotly_chart(fig, use_container_width=True)
 
                 # Log performance (simulating ground truth)
-                ground_truth = 1 if prediction_proba > 0.7 else 0
+                # Ask user to provide ground truth after prediction
+                st.markdown("#### ✅ Please provide actual outcome for this customer:")
+                ground_truth = st.radio("Did the customer actually churn?", [1, 0], index=1, horizontal=True)
+                
+                # Log actual vs predicted
                 monitor.log_performance([ground_truth], [prediction])
                 st.write(monitor.performance_history)
 
