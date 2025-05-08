@@ -3,8 +3,8 @@ import pandas as pd
 import pickle
 import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
-import time
-import random
+import mlflow
+import mlflow.sklearn
 
 # Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
@@ -15,51 +15,8 @@ threshold = model_data["threshold"]
 
 # Page configuration
 st.set_page_config(page_title="Churn Prediction App", layout="centered")
-
-# Custom CSS for stunning effects
-st.markdown("""
-    <style>
-    .header {
-        text-align: center;
-        font-size: 3rem;
-        color: #f1c40f;
-        font-family: 'Courier New', Courier, monospace;
-        animation: colorChange 5s infinite;
-    }
-
-    @keyframes colorChange {
-        0% { color: #f1c40f; }
-        25% { color: #e74c3c; }
-        50% { color: #2ecc71; }
-        75% { color: #3498db; }
-        100% { color: #f1c40f; }
-    }
-
-    .moving-box {
-        position: relative;
-        animation: moveBox 3s ease-in-out infinite;
-        width: 150px;
-        height: 150px;
-        background-color: #9b59b6;
-        margin: 20px auto;
-    }
-
-    @keyframes moveBox {
-        0% { transform: translateX(-50%); }
-        50% { transform: translateX(50%); }
-        100% { transform: translateX(-50%); }
-    }
-
-    .stButton>button:hover {
-        background-color: #3498db;
-        color: white;
-    }
-
-    </style>
-""", unsafe_allow_html=True)
-
-# Title with animation
-st.markdown('<div class="header">🔮 Churn Prediction App</div>', unsafe_allow_html=True)
+st.title("🔮 Churn Prediction App")
+st.markdown("Enter customer information to predict the likelihood of churn.")
 
 # Input form
 def user_input():
@@ -121,10 +78,23 @@ input_df = user_input()
 # Encode the input data
 encoded_input_df = encode_input_data(input_df)
 
+# Start the MLflow experiment
+mlflow.start_run()
+
+# Log the model
+mlflow.sklearn.log_model(model, "churn_model")
+
+# Log the threshold (you can log any parameter)
+mlflow.log_param("threshold", threshold)
+
 # Prediction
 if st.button("🔍 Predict Now"):
     prediction_proba = model.predict_proba(encoded_input_df)[0][1]
     prediction = 1 if prediction_proba >= threshold else 0
+
+    # Log the prediction and its probability
+    mlflow.log_metric("prediction_probability", prediction_proba)
+    mlflow.log_metric("prediction", prediction)
 
     # Play sound effect based on prediction (if churn)
     if prediction == 1:
@@ -149,5 +119,8 @@ if st.button("🔍 Predict Now"):
     fig.update_layout(title="Churn Probability", width=500, height=400)
     st.plotly_chart(fig)
 
-    # Add a moving box as a decoration
+    # Add a moving box as a decoration (HTML, CSS)
     st.markdown('<div class="moving-box"></div>', unsafe_allow_html=True)
+
+# End the MLflow run
+mlflow.end_run()
