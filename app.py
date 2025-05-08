@@ -49,11 +49,6 @@ def retrain_model():
             with st.spinner("Retraining model..."):
                 # تحميل البيانات
                 df = pd.read_csv("WA_Fn-UseC_-Telco-Customer-Churn.csv")
-                
-                # التأكد من أن البيانات ليست فارغة
-                if df.isnull().values.any():
-                    st.error("البيانات تحتوي على قيم مفقودة! من فضلك تأكد من تنظيف البيانات قبل التدريب.")
-                    return
 
                 # تحويل الأعمدة النصية إلى قيم رقمية (Label Encoding)
                 categorical_cols = ['Partner', 'Dependents', 'InternetService', 'OnlineSecurity', 'OnlineBackup', 
@@ -68,16 +63,8 @@ def retrain_model():
                 X = df.drop('Churn', axis=1)  # حذف عمود Churn واستخدام بقية الأعمدة
                 y = df['Churn']  # الهدف هو عمود Churn
 
-                # التأكد من أن الأعمدة في X و y متوافقة
-                st.write("X data columns:", X.columns)
-                st.write("y data type:", y.dtype)
-
                 # تقسيم البيانات إلى تدريب واختبار
-                try:
-                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-                except Exception as e:
-                    st.error(f"حدث خطأ أثناء تقسيم البيانات: {str(e)}")
-                    return
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
                 # تدريب النموذج
                 model = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -98,7 +85,6 @@ def retrain_model():
                 # عرض رسالة نجاح
                 st.success("Model retrained and saved successfully!")
                 st.balloons()
-
 
                 # تسجيل التدريب في MLflow
                 mlflow.set_experiment("Churn_Model_Training")
