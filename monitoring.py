@@ -1,27 +1,22 @@
-from skmultiflow.drift_detection import KSDDDetector
+from river import metrics
+from river import drift
 import pandas as pd
 
-def generate_drift_report(reference_data, current_data, output_path="churn-prediction-app/data/drift_report.html"):
-    # التحضير للكشف عن الانحراف باستخدام KSDDDetector
-    ksdd = KSDDDetector()  # استخدام اختبار KS للكشف عن الانحراف
+# Load your reference data and current data (for drift detection)
+reference_data = pd.read_csv("data/reference_data.csv")
+current_data = pd.read_csv("data/current_data.csv")
 
-    drift_results = []
-    
-    # دمج البيانات المرجعية والبيانات الحالية
-    combined_data = pd.concat([reference_data, current_data])
+# إنشاء نموذج لاكتشاف تغير البيانات
+drift_detector = drift.ADWIN()  # ADWIN هو خوارزم للكشف عن drift
 
-    # التحقق من الانحراف بين البيانات المرجعية والبيانات الحالية
-    for column in combined_data.columns:
-        ksdd.add_element(combined_data[column].values)  # إضافة البيانات الجديدة
-        drift_detected = ksdd.detected_change  # التحقق من الكشف عن انحراف
-        drift_results.append((column, drift_detected))
+# إظهار تقرير الكشوفات
+def generate_drift_report(reference_data, current_data, output_path="data/drift_report.txt"):
+    with open(output_path, "w") as file:
+        for col in reference_data.columns:
+            reference_column = reference_data[col]
+            current_column = current_data[col]
 
-    # إنشاء تقرير الانحراف
-    with open(output_path, 'w') as file:
-        file.write("<html><body><h1>Data Drift Report</h1><ul>")
-        for column, drift in drift_results:
-            drift_status = "Detected" if drift else "Not Detected"
-            file.write(f"<li>Column: {column} - Drift: {drift_status}</li>")
-        file.write("</ul></body></html>")
-    
+            drift_score = drift_detector.update(reference_column, current_column)
+            file.write(f"Column: {col}, Drift Detected: {drift_score > 0.5}\n")
+
     return output_path
