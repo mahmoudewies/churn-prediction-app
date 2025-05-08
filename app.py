@@ -214,7 +214,8 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
                 </p>
             </div>
         """, unsafe_allow_html=True)
-        st.warning()
+        st.markdown("🚨 Danger Ahead! Take action!")
+
     else:
         st.markdown(f"""
             <div class="success-box">
@@ -224,7 +225,8 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
                 </p>
             </div>
         """, unsafe_allow_html=True)
-        st.success()
+        st.markdown("🎉 Celebration Time! Great news!")
+
 
     # Interactive pie chart
     fig = go.Figure(data=[go.Pie(
