@@ -18,7 +18,7 @@ st.set_page_config(
     page_title="✨ Churn Prediction App",
     layout="centered",
     page_icon="🔮",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
     default_theme="light" 
 )
 
