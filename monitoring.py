@@ -1,4 +1,4 @@
-def generate_drift_report(reference_data, current_data, output_path="data/drift_report.html"):
+def generate_drift_report(reference_data, current_data, output_path="churn-prediction-app/data/drift_report.html"):
     from evidently.report import Report
     from evidently.metrics import DataDriftPreset
     
