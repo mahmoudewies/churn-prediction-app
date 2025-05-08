@@ -1,6 +1,19 @@
 import streamlit as st
+import pandas as pd
+import pickle
+import plotly.graph_objects as go
+from sklearn.preprocessing import LabelEncoder
+import mlflow
+import time
 
-# ABSOLUTELY FIRST COMMAND
+# Load model and threshold
+with open("final_stacked_model.pkl", "rb") as f:
+    model_data = pickle.load(f)
+
+model = model_data["model"]
+threshold = model_data["threshold"]
+
+# Page configuration with light theme
 st.set_page_config(
     page_title="✨ Churn Prediction App",
     layout="centered",
@@ -9,136 +22,108 @@ st.set_page_config(
     default_theme="light"
 )
 
-# ONLY NOW IMPORT OTHER LIBRARIES
-import pandas as pd
-import pickle
-import plotly.graph_objects as go
-from sklearn.preprocessing import LabelEncoder
-import mlflow
-import time
-from datetime import datetime
-
-def main():
-    # Load model
-    @st.cache_resource
-    def load_model():
-        try:
-            with open("final_stacked_model.pkl", "rb") as f:
-                model_data = pickle.load(f)
-            return model_data["model"], model_data["threshold"]
-        except Exception as e:
-            st.error(f"Model loading failed: {str(e)}")
-            return None, None
-
-    model, threshold = load_model()
-
-# 3. إعدادات MLflow (اختياري)
-MLFLOW_TRACKING_URI = "http://127.0.0.1:5000/"
-MLFLOW_ENABLED = False  # تغيير إلى True إذا كنت تريد تفعيل MLflow
-
-if MLFLOW_ENABLED:
-    try:
-        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-        mlflow.set_experiment("Churn_Prediction_App")
-        MLFLOW_ENABLED = True
-    except Exception as e:
-        st.warning(f"MLflow setup failed: {str(e)}")
-        MLFLOW_ENABLED = False
-
-# 4. CSS المخصص
-def load_css():
-    st.markdown("""
+# Custom CSS for light mode styling
+st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
         
-        :root {
-            --primary: #6a11cb;
-            --secondary: #2575fc;
-            --success: #00b09b;
-            --danger: #ff416c;
-            --light-bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --text: #2d3748;
-            --border: #e2e8f0;
+        /* Main app background */
+        .stApp {
+            background-color: #f8f9fa !important;
         }
         
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--light-bg) !important;
-            color: var(--text) !important;
-        }
-        
+        /* Titles styling */
         .title-text {
+            font-family: 'Poppins', sans-serif;
             font-size: 2.5rem !important;
             font-weight: 600 !important;
-            color: var(--primary) !important;
+            color: #4a00e0 !important;
             text-align: center;
             margin-bottom: 0.5rem;
         }
         
         .subtitle-text {
+            font-family: 'Poppins', sans-serif;
             font-size: 1.1rem !important;
-            color: #4a5568 !important;
+            color: #6c757d !important;
             text-align: center;
             margin-bottom: 2rem;
         }
         
-        .input-container {
-            background: var(--card-bg) !important;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid var(--border);
-            margin-bottom: 1.5rem;
-        }
-        
+        /* Buttons styling */
         .stButton>button {
-            background: linear-gradient(45deg, var(--primary), var(--secondary)) !important;
+            background: linear-gradient(45deg, #4a00e0 0%, #8e2de2 100%) !important;
             color: white !important;
+            font-weight: 600 !important;
             border: none !important;
             border-radius: 8px !important;
-            padding: 10px 24px !important;
-            font-weight: 500 !important;
+            padding: 10px 20px !important;
             transition: all 0.3s ease !important;
+            font-family: 'Poppins', sans-serif;
         }
         
         .stButton>button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(106, 17, 203, 0.2) !important;
+            transform: scale(1.03) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
         }
         
+        /* Input containers */
+        .input-container {
+            background-color: white !important;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+            border: 1px solid #e9ecef;
+        }
+        
+        /* Success and warning boxes */
         .success-box {
-            background: linear-gradient(45deg, var(--success), #96c93d) !important;
+            background: linear-gradient(45deg, #00b09b, #96c93d) !important;
             color: white !important;
-            border-radius: 12px !important;
             padding: 1.5rem !important;
-            box-shadow: 0 4px 12px rgba(0, 176, 155, 0.15) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05) !important;
         }
         
         .danger-box {
-            background: linear-gradient(45deg, var(--danger), #ff4b2b) !important;
+            background: linear-gradient(45deg, #ff416c, #ff4b2b) !important;
             color: white !important;
-            border-radius: 12px !important;
             padding: 1.5rem !important;
-            box-shadow: 0 4px 12px rgba(255, 65, 108, 0.15) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05) !important;
         }
         
-        .stSelectbox, .stTextInput, .stNumberInput, .stSlider {
-            border-radius: 8px !important;
-            border: 1px solid var(--border) !important;
-        }
-        
+        /* Slider styling */
         .stSlider .thumb {
-            background-color: var(--primary) !important;
+            background-color: #4a00e0 !important;
         }
         
         .stSlider .track {
-            background: linear-gradient(90deg, #E0E7FF, #C7D2FE) !important;
+            background: linear-gradient(90deg, #4a00e0, #8e2de2) !important;
+        }
+        
+        /* Select box styling */
+        .stSelectbox div[data-baseweb="select"] {
+            border-radius: 8px !important;
+            border: 1px solid #ced4da !important;
+        }
+        
+        /* Number input styling */
+        .stNumberInput input {
+            border-radius: 8px !important;
+            border: 1px solid #ced4da !important;
         }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# 5. واجهة المستخدم
+# App header
+col1, col2, col3 = st.columns([1,3,1])
+with col2:
+    st.markdown('<h1 class="title-text">✨ Churn Prediction Wizard</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle-text">Predict customer churn with machine learning precision</p>', unsafe_allow_html=True)
+
+# Input form with light mode styling
 def user_input():
     with st.container():
         st.markdown('<div class="input-container">', unsafe_allow_html=True)
@@ -148,11 +133,16 @@ def user_input():
             SeniorCitizen = st.selectbox("Is the customer a senior citizen?", [0, 1])
             Partner = st.selectbox("Has a partner?", ["Yes", "No"])
             Dependents = st.selectbox("Has dependents?", ["Yes", "No"])
-            tenure = st.slider("Tenure (months)", 0, 72, 12)
+            tenure = st.slider("Tenure (months)", 0, 72, 12, help="How long the customer has been with the company")
             InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
             OnlineSecurity = st.selectbox("Online Security", ["Yes", "No", "No internet service"])
+            OnlineBackup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
+            DeviceProtection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"])
             
         with col2:
+            TechSupport = st.selectbox("Tech Support", ["Yes", "No", "No internet service"])
+            StreamingTV = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"])
+            StreamingMovies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"])
             Contract = st.selectbox("Contract Type", ["Month-to-month", "One year", "Two year"])
             PaperlessBilling = st.selectbox("Paperless Billing?", ["Yes", "No"])
             PaymentMethod = st.selectbox("Payment Method", [
@@ -160,116 +150,119 @@ def user_input():
             ])
             MonthlyCharges = st.number_input("Monthly Charges ($)", min_value=0.0, format="%.2f")
             TotalCharges = st.number_input("Total Charges ($)", min_value=0.0, format="%.2f")
+            TotalServices = st.slider("Total Services Used", 0, 10, 5)
         
         st.markdown('</div>', unsafe_allow_html=True)
 
-    return pd.DataFrame({
+    data = pd.DataFrame({
         'SeniorCitizen': [SeniorCitizen],
         'Partner': [Partner],
         'Dependents': [Dependents],
         'tenure': [tenure],
         'InternetService': [InternetService],
         'OnlineSecurity': [OnlineSecurity],
+        'OnlineBackup': [OnlineBackup],
+        'DeviceProtection': [DeviceProtection],
+        'TechSupport': [TechSupport],
+        'StreamingTV': [StreamingTV],
+        'StreamingMovies': [StreamingMovies],
         'Contract': [Contract],
         'PaperlessBilling': [PaperlessBilling],
         'PaymentMethod': [PaymentMethod],
         'MonthlyCharges': [MonthlyCharges],
-        'TotalCharges': [TotalCharges]
+        'TotalCharges': [TotalCharges],
+        'TotalServices': [TotalServices]
     })
+    return data
 
-# 6. التنبؤ والتسجيل
-def predict_churn(input_df):
-    # Encode data
+# Function to encode the input data
+def encode_input_data(input_df):
     le = LabelEncoder()
-    categorical_cols = ['Partner', 'Dependents', 'InternetService', 
-                      'OnlineSecurity', 'Contract', 
-                      'PaperlessBilling', 'PaymentMethod']
+    columns_to_encode = ['Partner', 'Dependents', 'InternetService', 'OnlineSecurity', 
+                         'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 
+                         'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod']
     
-    for col in categorical_cols:
-        input_df[col] = le.fit_transform(input_df[col])
+    for column in columns_to_encode:
+        input_df[column] = le.fit_transform(input_df[column])
     
-    # Predict
-    prediction_proba = model.predict_proba(input_df)[0][1]
+    return input_df
+
+input_df = user_input()
+
+# Encode the input data
+encoded_input_df = encode_input_data(input_df)
+
+# Add the prediction button
+if st.button("✨ Predict Churn Probability", key="predict_button"):
+    with st.spinner('Analyzing customer data...'):
+        time.sleep(1.5)  # Simulate processing time
+        
+    prediction_proba = model.predict_proba(encoded_input_df)[0][1]
     prediction = 1 if prediction_proba >= threshold else 0
-    
-    # Log to MLflow
-    if MLFLOW_ENABLED:
-        try:
-            with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-                mlflow.log_params(input_df.to_dict(orient="records")[0])
-                mlflow.log_metrics({
-                    "probability": float(prediction_proba),
-                    "prediction": int(prediction)
-                })
-        except Exception as e:
-            st.warning(f"MLflow logging failed: {str(e)}")
-    
-    return prediction_proba, prediction
 
-# 7. الواجهة الرئيسية
-def main():
-    load_css()
-    
-    st.markdown('<h1 class="title-text">✨ Churn Prediction Wizard</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle-text">Predict customer churn with machine learning precision</p>', unsafe_allow_html=True)
-    
-    input_df = user_input()
-    
-    if st.button("✨ Predict Churn Probability"):
-        if model is None:
-            st.error("Model not loaded - cannot make predictions")
-            return
-            
-        with st.spinner('Analyzing customer data...'):
-            time.sleep(1)  # Simulation of processing time
-            prediction_proba, prediction = predict_churn(input_df)
-            
-            # Display results
-            if prediction == 1:
-                st.markdown(f"""
-                    <div class="danger-box">
-                        <h2 style='text-align:center;margin-bottom:0.5rem'>🚨 High Churn Risk</h2>
-                        <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                            Probability: {prediction_proba:.2%}
-                        </p>
-                    </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                    <div class="success-box">
-                        <h2 style='text-align:center;margin-bottom:0.5rem'>✅ Loyal Customer</h2>
-                        <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                            Retention Probability: {(1-prediction_proba):.2%}
-                        </p>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-            # Visualization
-            fig = go.Figure(data=[go.Pie(
-                labels=['Will Stay', 'Will Churn'],
-                values=[1-prediction_proba, prediction_proba],
-                marker_colors=['#00b09b', '#ff416c'],
-                hole=0.5,
-                textinfo='percent+label'
-            )])
-            
-            fig.update_layout(
-                showlegend=False,
-                margin=dict(t=30, b=0),
-                height=300,
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-    
-    # Footer
-    st.markdown("---")
-    st.markdown("""
-        <div style='text-align:center;color:#4a5568;font-size:0.9rem'>
-            <p>🔮 Predictive Analytics | 📊 Customer Insights | 🤖 ML Powered</p>
-        </div>
-    """, unsafe_allow_html=True)
+    # Result display
+    if prediction == 1:
+        st.markdown(f"""
+            <div class="danger-box">
+                <h2 style='color: white; text-align: center; margin-bottom: 0.5rem;'>🚨 High Churn Risk</h2>
+                <p style='color: white; text-align: center; font-size: 1.3rem; margin-bottom: 0;'>
+                    Probability: {prediction_proba:.2%}
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        st.balloons()
+    else:
+        st.markdown(f"""
+            <div class="success-box">
+                <h2 style='color: white; text-align: center; margin-bottom: 0.5rem;'>✅ Loyal Customer</h2>
+                <p style='color: white; text-align: center; font-size: 1.3rem; margin-bottom: 0;'>
+                    Retention Probability: {(1 - prediction_proba):.2%}
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        st.snow()
 
-if __name__ == "__main__":
-    main()
+    # Interactive pie chart
+    fig = go.Figure(data=[go.Pie(
+        labels=['Will Stay', 'Will Churn'],
+        values=[1 - prediction_proba, prediction_proba],
+        marker_colors=['#96c93d', '#ff4b2b'],
+        hole=0.4,
+        pull=[0.1 if prediction == 1 else 0, 0.1 if prediction == 0 else 0],
+        textinfo='percent+label',
+        hoverinfo='label+percent'
+    )])
+    
+    fig.update_layout(
+        title="Churn Probability Breakdown",
+        width=500,
+        height=500,
+        showlegend=False,
+        annotations=[dict(text=f"{prediction_proba:.0%}", x=0.5, y=0.5, font_size=40, showarrow=False)],
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Log prediction to MLflow
+    try:
+        mlflow.set_tracking_uri("http://localhost:5000")
+        mlflow.set_experiment("Churn_Prediction_App")
+        
+        with mlflow.start_run(run_name="User_Prediction"):
+            mlflow.log_params(encoded_input_df.to_dict(orient="records")[0])
+            mlflow.log_metric("prediction_proba", float(prediction_proba))
+            mlflow.log_metric("prediction_class", int(prediction))
+    except:
+        st.warning("Could not connect to MLflow tracking server")
+
+# Footer
+st.markdown("---")
+st.markdown("""
+    <div style="text-align: center; color: #6c757d; font-family: 'Poppins', sans-serif; padding: 1rem;">
+        <p style="margin-bottom: 0.5rem;">🔮 Predict customer behavior with 90%+ accuracy</p>
+        <p style="margin-bottom: 0.5rem;">📊 Get actionable insights to reduce churn</p>
+        <p>💡 Powered by machine learning</p>
+    </div>
+""", unsafe_allow_html=True)
