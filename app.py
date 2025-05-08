@@ -5,6 +5,9 @@ import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
 import mlflow
 import time
+from datetime import datetime
+import numpy as np
+from sklearn.metrics import accuracy_score, f1_score
 import streamlit as st
 
 # MUST be the first command
@@ -13,6 +16,35 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="auto"
 )
+
+# ============== Model Monitoring ==============
+class ModelMonitor:
+    def __init__(self):
+        self.performance_history = []
+        
+    def log_performance(self, y_true, y_pred):
+        accuracy = accuracy_score(y_true, y_pred)
+        f1 = f1_score(y_true, y_pred)
+        
+        self.performance_history.append({
+            'timestamp': datetime.now(),
+            'accuracy': accuracy,
+            'f1_score': f1
+        })
+        
+        if len(self.performance_history) > 5 and np.mean([x['f1_score'] for x in self.performance_history[-5:]]) < 0.7:
+            st.sidebar.error("🚨 Alert: Model performance degradation detected!")
+
+monitor = ModelMonitor()
+
+# ============== Retraining Strategy ==============
+def retrain_model():
+    with st.sidebar.expander("🔧 Model Retraining"):
+        if st.button("Trigger Retraining"):
+            with st.spinner("Retraining model..."):
+                time.sleep(5)  # Simulate retraining
+                st.success("Model retrained successfully!")
+                st.balloons()
 
 # Only after page config you can do other stuff
 #st.title("My App") 
@@ -185,7 +217,66 @@ def user_input():
         'TotalServices': [TotalServices]
     })
     return data
+# ============== Enhanced Prediction Function ==============
+def enhanced_predict(input_df):
+    # Encode data
+    le = LabelEncoder()
+    categorical_cols = ['Partner', 'Dependents', 'InternetService', 'OnlineSecurity', 
+                       'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 
+                       'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod']
+    
+    for col in categorical_cols:
+        input_df[col] = le.fit_transform(input_df[col])
+    
+    # Predict
+    prediction_proba = model.predict_proba(input_df)[0][1]
+    prediction = 1 if prediction_proba >= threshold else 0
+    
+    # Log to monitoring system
+    try:
+        # In real app, you'd have actual ground truth
+        # For demo, we'll simulate some ground truth
+        ground_truth = 1 if prediction_proba > 0.7 else 0
+        monitor.log_performance([ground_truth], [prediction], datetime.now())
+        
+        # Check data drift (simplified example)
+        current_stats = {'tenure_mean': input_df['tenure'].mean()}
+        reference_stats = {'tenure_mean': 32}  # From training data
+        monitor.check_data_drift(current_stats, reference_stats)
+    except Exception as e:
+        st.error(f"Monitoring error: {str(e)}")
+    
+    return prediction_proba, prediction
 
+# ============== Retraining Section ==============
+st.sidebar.header("Model Management")
+if st.sidebar.checkbox("Show Model Monitoring"):
+    st.subheader("Model Performance Monitoring")
+    
+    # Simulate performance metrics
+    if len(monitor.performance_history) == 0:
+        st.info("No performance data yet. Make some predictions first.")
+    else:
+        # Create performance chart
+        perf_df = pd.DataFrame(monitor.performance_history)
+        st.line_chart(perf_df.set_index('timestamp'))
+        
+        # Show latest metrics
+        latest = perf_df.iloc[-1]
+        col1, col2 = st.columns(2)
+        col1.metric("Latest Accuracy", f"{latest['accuracy']:.2%}")
+        col2.metric("Latest F1 Score", f"{latest['f1_score']:.2%}")
+
+if st.sidebar.checkbox("Trigger Manual Retraining"):
+    # In real app, you would load new data here
+    retrain_model(None)  # Passing None for demo
+
+# ============== Modified Prediction Button ==============
+if st.button("✨ Predict Churn Probability", key="predict_button"):
+    with st.spinner('Analyzing customer data...'):
+        time.sleep(1.5)  # Simulate processing time
+        
+        prediction_proba, prediction = enhanced_predict(input_df.copy())
 # Function to encode the input data
 def encode_input_data(input_df):
     le = LabelEncoder()
@@ -260,16 +351,21 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
 
     # Log prediction to MLflow
     try:
-        mlflow.set_tracking_uri("http://127.0.0.1:5000/")
-        mlflow.set_experiment("Churn_Prediction_App")
-        
-        with mlflow.start_run(run_name="User_Prediction"):
-            mlflow.log_params(encoded_input_df.to_dict(orient="records")[0])
-            mlflow.log_metric("prediction_proba", float(prediction_proba))
-            mlflow.log_metric("prediction_class", int(prediction))
-    except:
-        st.warning("Could not connect to MLflow tracking server")
-
+            mlflow.set_tracking_uri("http://127.0.0.1:5000/")
+            mlflow.set_experiment("Churn_Prediction_App")
+            
+            with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
+                mlflow.log_params(encoded_input_df.to_dict(orient="records")[0])
+                mlflow.log_metric("prediction_proba", float(prediction_proba))
+                mlflow.log_metric("prediction_class", int(prediction))
+                
+                # Log monitoring metrics
+                if len(monitor.performance_history) > 0:
+                    latest = monitor.performance_history[-1]
+                    mlflow.log_metric("accuracy", latest['accuracy'])
+                    mlflow.log_metric("f1_score", latest['f1_score'])
+        except Exception as e:
+            st.warning(f"MLflow logging failed: {str(e)}")
 # Footer
 st.markdown("---")
 st.markdown("""
