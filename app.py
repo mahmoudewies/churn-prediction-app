@@ -5,7 +5,14 @@ import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
 import mlflow
 import time
+import streamlit as st
 
+# MUST be the first command
+st.set_page_config(
+    page_title="My App",
+    layout="centered",
+    initial_sidebar_state="auto"
+)
 # Load model and threshold
 with open("final_stacked_model.pkl", "rb") as f:
     model_data = pickle.load(f)
