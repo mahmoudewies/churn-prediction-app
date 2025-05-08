@@ -43,7 +43,6 @@ if "monitor" not in st.session_state:
 monitor = st.session_state["monitor"]
 
 # ============== Retraining Strategy ==============
-# ============== Retraining Strategy ==============
 def retrain_model():
     with st.sidebar.expander("🔧 Model Retraining"):
         if st.button("Trigger Retraining", key="retrain_btn"):
@@ -71,17 +70,22 @@ def retrain_model():
                 model = RandomForestClassifier(n_estimators=100, random_state=42)
                 model.fit(X_train, y_train)
 
+                # تسجيل النموذج في MLflow
+                with mlflow.start_run():
+                    mlflow.sklearn.log_model(model, "churn_prediction_model")
+                    mlflow.log_metric("accuracy", accuracy_score(y_test, model.predict(X_test)))
+                    mlflow.log_metric("f1_score", f1_score(y_test, model.predict(X_test)))
+
                 # حفظ النموذج بعد التدريب
                 with open("final_stacked_model.pkl", "wb") as f:
                     pickle.dump({
                         "model": model,
-                        "threshold": 0.5  # يمكن تخصيص العتبة هنا
+                        "threshold": 0.5  # تخصيص العتبة هنا
                     }, f)
 
                 # عرض رسالة نجاح
                 st.success("Model retrained and saved successfully!")
                 st.balloons()
-
 
 # Display GIF in the center
 st.markdown("""
@@ -215,6 +219,11 @@ def make_prediction(input_df):
     try:
         prediction_proba = model.predict_proba(input_df)[0][1]
         prediction = 1 if prediction_proba >= threshold else 0
+        
+        # تسجيل التنبؤات في MLflow
+        mlflow.log_metric("prediction_probability", prediction_proba)
+        mlflow.log_metric("prediction_class", prediction)
+        
         return prediction_proba, prediction
     except Exception as e:
         st.error(f"Prediction failed: {str(e)}")
@@ -223,81 +232,12 @@ def make_prediction(input_df):
             st.error(f"Model expects columns: {model.feature_names_in_.tolist()}")
         return None, None
 
-# ============== Main App Logic ==============
-def main():
-    retrain_model()
-    
-    # Model Monitoring Dashboard
-    if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
-        st.subheader("Model Performance Monitoring")
-        
-        if len(monitor.performance_history) == 0:
-            st.info("No performance data yet. Make some predictions first.")
-        else:
-            perf_df = pd.DataFrame(monitor.performance_history)
-            st.line_chart(perf_df.set_index('timestamp'))
-            
-            latest = perf_df.iloc[-1]
-            col1, col2 = st.columns(2)
-            col1.metric("Latest Accuracy", f"{latest['accuracy']:.2%}")
-            col2.metric("Latest F1 Score", f"{latest['f1_score']:.2%}")
+# Get user input and make prediction
+user_input = get_user_input()
+prediction_proba, prediction = make_prediction(user_input)
 
-    # Get user input
-    input_df = get_user_input()
-
-    # Prediction button
-    if st.button("✨ Predict Churn Probability", key="predict_btn"):
-        with st.spinner('Analyzing customer data...'):
-            time.sleep(1.5)
-            
-            prediction_proba, prediction = make_prediction(input_df.copy())
-
-            if prediction is not None:
-                # Display results
-                if prediction == 1:
-                    st.markdown(f"""
-                        <div class="danger-box">
-                            <h2 style='text-align:center;margin-bottom:0.5rem'>🚨 High Churn Risk</h2>
-                            <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                                Probability: {prediction_proba:.2%}
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.balloons()
-                else:
-                    st.markdown(f"""
-                        <div class="success-box">
-                            <h2 style='text-align:center;margin-bottom:0.5rem'>✅ Loyal Customer</h2>
-                            <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                                Retention Probability: {(1-prediction_proba):.2%}
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.snow()
-
-                # Visualization
-                fig = go.Figure(data=[go.Pie(
-                    labels=['Will Stay', 'Will Churn'],
-                    values=[1-prediction_proba, prediction_proba],
-                    marker_colors=['#00b09b', '#ff416c'],
-                    hole=0.5,
-                    textinfo='percent+label'
-                )])
-                
-                fig.update_layout(
-                    showlegend=False,
-                    margin=dict(t=30, b=0),
-                    height=300
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-
-                # Log performance (simulating ground truth)
-                # Ask user for actual (ground truth) label
-                ground_truth = st.radio("🔍 Confirm Customer Churn (Ground Truth)", [None, 1, 0], key="truth")
-                if ground_truth is not None:
-                    monitor.log_performance([ground_truth], [prediction])
-                    st.success("Performance logged successfully!")
-
-if __name__ == "__main__":
-    main()
+# Display the prediction result
+if prediction is not None:
+    st.write(f"### Prediction Probability: {prediction_proba * 100:.2f}%")
+    st.write(f"### Predicted Churn: {'Yes' if prediction == 1 else 'No'}")
+    monitor.log_performance(user_input, prediction)
