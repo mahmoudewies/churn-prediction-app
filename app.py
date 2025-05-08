@@ -7,7 +7,7 @@ import mlflow
 import time
 from datetime import datetime
 
-# 1. يجب أن يكون هذا أول أمر في السكريبت
+# 1. يجب أن يكون هذا أول أمر في السكريبت - لا شيء قبله!
 st.set_page_config(
     page_title="✨ Churn Prediction App",
     layout="centered",
@@ -16,18 +16,20 @@ st.set_page_config(
     default_theme="light"
 )
 
-# 2. تحميل النموذج مع معالجة الأخطاء
-@st.cache_resource
-def load_model():
-    try:
-        with open("final_stacked_model.pkl", "rb") as f:
-            model_data = pickle.load(f)
-        return model_data["model"], model_data["threshold"]
-    except Exception as e:
-        st.error(f"Failed to load model: {str(e)}")
-        return None, None
+# 2. الآن يمكنك وضع بقية الكود
+def main():
+    # تحميل النموذج
+    @st.cache_resource
+    def load_model():
+        try:
+            with open("final_stacked_model.pkl", "rb") as f:
+                model_data = pickle.load(f)
+            return model_data["model"], model_data["threshold"]
+        except Exception as e:
+            st.error(f"فشل تحميل النموذج: {str(e)}")
+            return None, None
 
-model, threshold = load_model()
+    model, threshold = load_model()
 
 # 3. إعدادات MLflow (اختياري)
 MLFLOW_TRACKING_URI = "http://127.0.0.1:5000/"
