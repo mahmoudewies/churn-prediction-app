@@ -19,7 +19,7 @@ st.set_page_config(
 # Display GIF in the center
 st.markdown("""
     <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
-        <img src="https://raw.githubusercontent.com/mahmoudewies/churn-prediction-app/main/Pay%20Per%20Click%20Digital%20Marketing%20(1).gif" alt="GIF" width="700">
+        <img src="https://raw.githubusercontent.com/mahmoudewies/churn-prediction-app/main/Pay%20Per%20Click%20Digital%20Marketing%20(1).gif" alt="GIF" width="600">
     </div>
 """, unsafe_allow_html=True)
 
