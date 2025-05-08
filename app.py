@@ -19,6 +19,7 @@ st.set_page_config(
     layout="centered",
     page_icon="🔮",
     initial_sidebar_state="expanded"
+    default_theme="light" 
 )
 
 # Custom CSS for styling
