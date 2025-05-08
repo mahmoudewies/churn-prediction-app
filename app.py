@@ -28,6 +28,9 @@ class ModelMonitor:
         })
 
 # ----------------- دالة لتحميل المدخلات -----------------
+# ----------------- قائمة الأعمدة التي يتوقعها النموذج -----------------
+expected_columns = ['SeniorCitizen', 'Partner', 'Dependents', 'tenure', 'MonthlyCharges']
+
 def get_user_input():
     # توجيه المستخدم لإدخال البيانات
     SeniorCitizen = st.selectbox("Is the customer a senior citizen?", [0, 1])
@@ -36,7 +39,8 @@ def get_user_input():
     tenure = st.slider("Tenure (months)", 0, 72, 12)
     MonthlyCharges = st.number_input("Monthly Charges ($)", min_value=0.0, format="%.2f")
     
-    data = pd.DataFrame({
+    # تحويل البيانات المدخلة إلى DataFrame
+    input_data = pd.DataFrame({
         'SeniorCitizen': [SeniorCitizen],
         'Partner': [Partner],
         'Dependents': [Dependents],
@@ -44,7 +48,11 @@ def get_user_input():
         'MonthlyCharges': [MonthlyCharges]
     })
     
-    return data
+    # التأكد من تطابق الأعمدة
+    input_data = input_data[expected_columns]
+    
+    return input_data
+
 
 # ----------------- دالة للتنبؤ -----------------
 def make_prediction(input_df):
