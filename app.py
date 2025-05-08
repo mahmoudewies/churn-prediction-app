@@ -6,11 +6,17 @@ from sklearn.metrics import accuracy_score, f1_score
 from datetime import datetime
 
 # ----------------- تحميل النموذج -----------------
-with open("final_stacked_model.pkl", "rb") as f:
-    model_data = pickle.load(f)
+import pickle
 
-model = model_data["model"]
-threshold = model_data["threshold"]
+# محاولة فتح النموذج وتحديد ما إذا كان ملف pickle فارغًا
+try:
+    with open('model.pkl', 'rb') as f:
+        model = pickle.load(f)
+except EOFError:
+    print("The model file is empty or corrupted.")
+except Exception as e:
+    print(f"An error occurred: {e}")
+
 
 # ----------------- دالة لتسجيل الأداء -----------------
 class ModelMonitor:
