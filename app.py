@@ -5,113 +5,127 @@ import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
 import mlflow
 import time
-import streamlit as st
 
-# MUST be the first command
+# Page configuration must be the first Streamlit command
 st.set_page_config(
-    page_title="My App",
+    page_title="✨ Churn Prediction App",
     layout="centered",
-    initial_sidebar_state="auto"
+    page_icon="🔮",
+    initial_sidebar_state="expanded",
+    default_theme="light"
 )
-# Load model and threshold
+
+# Load model and threshold (must come after set_page_config)
 with open("final_stacked_model.pkl", "rb") as f:
     model_data = pickle.load(f)
 
 model = model_data["model"]
 threshold = model_data["threshold"]
 
-# Page configuration with custom theme
-st.set_page_config(
-    page_title="✨ Churn Prediction App",
-    layout="centered",
-    page_icon="🔮",
-    initial_sidebar_state="expanded",
-    default_theme="light" 
-)
+# Rest of your code remains the same...
 
-# Custom CSS for styling
+# Custom CSS for light mode styling
 st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
         
+        /* Main app background */
+        .stApp {
+            background-color: #f8f9fa !important;
+        }
+        
+        /* Titles styling */
         .title-text {
             font-family: 'Poppins', sans-serif;
-            font-size: 3rem !important;
+            font-size: 2.5rem !important;
             font-weight: 600 !important;
-            color: #6a11cb !important;
+            color: #4a00e0 !important;
             text-align: center;
             margin-bottom: 0.5rem;
         }
         
         .subtitle-text {
             font-family: 'Poppins', sans-serif;
-            font-size: 1.2rem !important;
-            color: #6a11cb !important;
+            font-size: 1.1rem !important;
+            color: #6c757d !important;
             text-align: center;
             margin-bottom: 2rem;
         }
         
+        /* Buttons styling */
         .stButton>button {
-            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%) !important;
+            background: linear-gradient(45deg, #4a00e0 0%, #8e2de2 100%) !important;
             color: white !important;
-            font-weight: bold !important;
+            font-weight: 600 !important;
             border: none !important;
-            border-radius: 12px !important;
-            padding: 12px 24px !important;
+            border-radius: 8px !important;
+            padding: 10px 20px !important;
             transition: all 0.3s ease !important;
+            font-family: 'Poppins', sans-serif;
         }
         
         .stButton>button:hover {
-            transform: scale(1.05) !important;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
-        }
-        
-        .input-container {
-            background-color: #f8f9fa;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
-        
-        .success-box {
-            background: linear-gradient(45deg, #11998e, #38ef7d) !important;
-            color: white !important;
-            padding: 20px !important;
-            border-radius: 12px !important;
+            transform: scale(1.03) !important;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-            animation: pulse 2s infinite;
+        }
+        
+        /* Input containers */
+        .input-container {
+            background-color: white !important;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+            border: 1px solid #e9ecef;
+        }
+        
+        /* Success and warning boxes */
+        .success-box {
+            background: linear-gradient(45deg, #00b09b, #96c93d) !important;
+            color: white !important;
+            padding: 1.5rem !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05) !important;
         }
         
         .danger-box {
-            background: linear-gradient(45deg, #f12711, #f5af19) !important;
+            background: linear-gradient(45deg, #ff416c, #ff4b2b) !important;
             color: white !important;
-            padding: 20px !important;
-            border-radius: 12px !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-            animation: pulse 2s infinite;
+            padding: 1.5rem !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05) !important;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
+        /* Slider styling */
+        .stSlider .thumb {
+            background-color: #4a00e0 !important;
+        }
+        
+        .stSlider .track {
+            background: linear-gradient(90deg, #4a00e0, #8e2de2) !important;
+        }
+        
+        /* Select box styling */
+        .stSelectbox div[data-baseweb="select"] {
+            border-radius: 8px !important;
+            border: 1px solid #ced4da !important;
+        }
+        
+        /* Number input styling */
+        .stNumberInput input {
+            border-radius: 8px !important;
+            border: 1px solid #ced4da !important;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Animated header with GIF
-col1, col2, col3 = st.columns([1,2,1])
+# App header
+col1, col2, col3 = st.columns([1,3,1])
 with col2:
-    st.image("https://example.com/Pay%20Per%20Click%20Digital%20Marketing.gif", 
-             width=400, 
-             caption="Customer Churn Prediction Analysis")
+    st.markdown('<h1 class="title-text">✨ Churn Prediction Wizard</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle-text">Predict customer churn with machine learning precision</p>', unsafe_allow_html=True)
 
-# App title with custom styling
-st.markdown('<h1 class="title-text">✨ Churn Prediction Wizard</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle-text">Predict customer churn with machine learning precision</p>', unsafe_allow_html=True)
-
-# Input form with enhanced styling
+# Input form with light mode styling
 def user_input():
     with st.container():
         st.markdown('<div class="input-container">', unsafe_allow_html=True)
@@ -188,12 +202,12 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
     prediction_proba = model.predict_proba(encoded_input_df)[0][1]
     prediction = 1 if prediction_proba >= threshold else 0
 
-    # Animated result display
+    # Result display
     if prediction == 1:
         st.markdown(f"""
             <div class="danger-box">
-                <h2 style='color: white; text-align: center;'>🚨 High Churn Risk</h2>
-                <p style='color: white; text-align: center; font-size: 1.5rem;'>
+                <h2 style='color: white; text-align: center; margin-bottom: 0.5rem;'>🚨 High Churn Risk</h2>
+                <p style='color: white; text-align: center; font-size: 1.3rem; margin-bottom: 0;'>
                     Probability: {prediction_proba:.2%}
                 </p>
             </div>
@@ -202,8 +216,8 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
     else:
         st.markdown(f"""
             <div class="success-box">
-                <h2 style='color: white; text-align: center;'>✅ Loyal Customer</h2>
-                <p style='color: white; text-align: center; font-size: 1.5rem;'>
+                <h2 style='color: white; text-align: center; margin-bottom: 0.5rem;'>✅ Loyal Customer</h2>
+                <p style='color: white; text-align: center; font-size: 1.3rem; margin-bottom: 0;'>
                     Retention Probability: {(1 - prediction_proba):.2%}
                 </p>
             </div>
@@ -214,8 +228,8 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
     fig = go.Figure(data=[go.Pie(
         labels=['Will Stay', 'Will Churn'],
         values=[1 - prediction_proba, prediction_proba],
-        marker_colors=['#38ef7d', '#f12711'],
-        hole=0.5,
+        marker_colors=['#96c93d', '#ff4b2b'],
+        hole=0.4,
         pull=[0.1 if prediction == 1 else 0, 0.1 if prediction == 0 else 0],
         textinfo='percent+label',
         hoverinfo='label+percent'
@@ -226,7 +240,9 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
         width=500,
         height=500,
         showlegend=False,
-        annotations=[dict(text=f"{prediction_proba:.0%}", x=0.5, y=0.5, font_size=40, showarrow=False)]
+        annotations=[dict(text=f"{prediction_proba:.0%}", x=0.5, y=0.5, font_size=40, showarrow=False)],
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -243,12 +259,12 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
     except:
         st.warning("Could not connect to MLflow tracking server")
 
-# Add some decorative elements
+# Footer
 st.markdown("---")
 st.markdown("""
-    <div style="text-align: center; color: #6a11cb; font-family: 'Poppins', sans-serif;">
-        <p>🔮 Predict customer behavior with 90%+ accuracy</p>
-        <p>📊 Get actionable insights to reduce churn</p>
+    <div style="text-align: center; color: #6c757d; font-family: 'Poppins', sans-serif; padding: 1rem;">
+        <p style="margin-bottom: 0.5rem;">🔮 Predict customer behavior with 90%+ accuracy</p>
+        <p style="margin-bottom: 0.5rem;">📊 Get actionable insights to reduce churn</p>
         <p>💡 Powered by machine learning</p>
     </div>
 """, unsafe_allow_html=True)
