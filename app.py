@@ -1,13 +1,6 @@
 import streamlit as st
-import pandas as pd
-import pickle
-import plotly.graph_objects as go
-from sklearn.preprocessing import LabelEncoder
-import mlflow
-import time
-from datetime import datetime
 
-# 1. يجب أن يكون هذا أول أمر في السكريبت - لا شيء قبله!
+# ABSOLUTELY FIRST COMMAND
 st.set_page_config(
     page_title="✨ Churn Prediction App",
     layout="centered",
@@ -16,9 +9,17 @@ st.set_page_config(
     default_theme="light"
 )
 
-# 2. الآن يمكنك وضع بقية الكود
+# ONLY NOW IMPORT OTHER LIBRARIES
+import pandas as pd
+import pickle
+import plotly.graph_objects as go
+from sklearn.preprocessing import LabelEncoder
+import mlflow
+import time
+from datetime import datetime
+
 def main():
-    # تحميل النموذج
+    # Load model
     @st.cache_resource
     def load_model():
         try:
@@ -26,7 +27,7 @@ def main():
                 model_data = pickle.load(f)
             return model_data["model"], model_data["threshold"]
         except Exception as e:
-            st.error(f"فشل تحميل النموذج: {str(e)}")
+            st.error(f"Model loading failed: {str(e)}")
             return None, None
 
     model, threshold = load_model()
