@@ -8,11 +8,15 @@ import datetime
 import os
 from monitoring import generate_drift_report
 
-with open("final_stacked_model.pkl", "rb") as f:
-    model_data = pickle.load(f)
+# تحميل النموذج النهائي من MLflow (بدلاً من pickle)
+mlflow.set_tracking_uri("http://localhost:5000")  # Change if you're using a remote server
+mlflow.set_experiment("Churn_Prediction_App")
 
-model = model_data["model"]
-threshold = model_data["threshold"]
+# قراءة النموذج والتفاصيل من MLflow
+with mlflow.start_run(run_id="3cb4563a1b054bf68277581e14f8cbbb"):  # استخدم Run ID الخاص بك هنا
+    model_data = mlflow.artifacts.download_artifacts("final_stacked_model.pkl")
+    model = pickle.load(open(model_data, "rb"))
+    threshold = model_data["threshold"]
 
 # Page configuration
 st.set_page_config(page_title="Churn Prediction App", layout="centered")
@@ -120,9 +124,6 @@ if st.button("🔍 Predict Now"):
     st.markdown("📉 [View Data Drift Report](data/drift_report.html)", unsafe_allow_html=True)
 
     # MLflow Logging
-    mlflow.set_tracking_uri("http://localhost:5000")  # Change if you're using a remote server
-    mlflow.set_experiment("Churn_Prediction_App")
-
     with mlflow.start_run(run_name="User_Prediction"):
         mlflow.log_params(encoded_input_df.to_dict(orient="records")[0])
         mlflow.log_metric("prediction_proba", float(prediction_proba))
