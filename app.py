@@ -364,7 +364,7 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
                     latest = monitor.performance_history[-1]
                     mlflow.log_metric("accuracy", latest['accuracy'])
                     mlflow.log_metric("f1_score", latest['f1_score'])
-        except Exception as e:
+    except Exception as e:
             st.warning(f"MLflow logging failed: {str(e)}")
 # Footer
 st.markdown("---")
