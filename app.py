@@ -16,6 +16,12 @@ st.set_page_config(
 
 # Only after page config you can do other stuff
 st.title("My App")
+# Display GIF in the center
+st.markdown("""
+    <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
+        <img src="https://raw.githubusercontent.com/mahmoudewies/churn-prediction-app/main/Pay%20Per%20Click%20Digital%20Marketing.gif" alt="GIF" width="400">
+    </div>
+""", unsafe_allow_html=True)
 
 # Load model and threshold (must come after set_page_config)
 with open("final_stacked_model.pkl", "rb") as f:
