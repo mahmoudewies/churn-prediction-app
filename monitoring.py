@@ -1,19 +1,27 @@
+from skmultiflow.drift_detection import KSDDDetector
+import pandas as pd
+
 def generate_drift_report(reference_data, current_data, output_path="churn-prediction-app/data/drift_report.html"):
-    from alibi.detect import Drachen
-    import json
+    # التحضير للكشف عن الانحراف باستخدام KSDDDetector
+    ksdd = KSDDDetector()  # استخدام اختبار KS للكشف عن الانحراف
 
-    # تحويل البيانات إلى تنسيق مناسب
-    reference_data = reference_data.to_numpy()
-    current_data = current_data.to_numpy()
-
-    # إنشاء كائن دراكن للكشف عن التشتت
-    drift_detector = Drachen()
+    drift_results = []
     
-    # اكتشاف التشتت
-    drift_results = drift_detector.fit(reference_data, current_data)
+    # دمج البيانات المرجعية والبيانات الحالية
+    combined_data = pd.concat([reference_data, current_data])
 
-    # حفظ التقرير في ملف HTML
-    with open(output_path, "w") as f:
-        json.dump(drift_results, f)
+    # التحقق من الانحراف بين البيانات المرجعية والبيانات الحالية
+    for column in combined_data.columns:
+        ksdd.add_element(combined_data[column].values)  # إضافة البيانات الجديدة
+        drift_detected = ksdd.detected_change  # التحقق من الكشف عن انحراف
+        drift_results.append((column, drift_detected))
 
+    # إنشاء تقرير الانحراف
+    with open(output_path, 'w') as file:
+        file.write("<html><body><h1>Data Drift Report</h1><ul>")
+        for column, drift in drift_results:
+            drift_status = "Detected" if drift else "Not Detected"
+            file.write(f"<li>Column: {column} - Drift: {drift_status}</li>")
+        file.write("</ul></body></html>")
+    
     return output_path
