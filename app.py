@@ -4,9 +4,6 @@ import pickle
 import plotly.graph_objects as go
 from sklearn.preprocessing import LabelEncoder
 import mlflow
-from streamlit_extras.colored_header import colored_header
-from streamlit_extras.stylable_container import stylable_container
-from streamlit_extras.let_it_rain import rain
 import time
 
 # Load model and threshold
@@ -61,45 +58,12 @@ st.markdown("""
             box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
         }
         
-        .stSelectbox, .stSlider, .stNumberInput {
-            border-radius: 12px !important;
-            border: 1px solid #6a11cb !important;
-            padding: 8px !important;
-        }
-        
-        .st-bb {
-            background-color: transparent !important;
-        }
-        
-        .st-at {
-            background-color: #f0f2f6 !important;
-        }
-        
-        .st-bh {
-            border-color: #6a11cb !important;
-        }
-        
-        .st-cg {
-            color: #6a11cb !important;
-        }
-        
-        .st-ck {
-            color: #6a11cb !important;
-        }
-        
-        .stTextInput>div>div>input {
-            border-radius: 12px !important;
-            border: 1px solid #6a11cb !important;
-        }
-        
-        .stNumberInput>div>div>input {
-            border-radius: 12px !important;
-            border: 1px solid #6a11cb !important;
-        }
-        
-        .css-1aumxhk {
-            background-color: #f0f2f6;
-            background-image: none;
+        .input-container {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
         }
         
         .success-box {
@@ -108,6 +72,7 @@ st.markdown("""
             padding: 20px !important;
             border-radius: 12px !important;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+            animation: pulse 2s infinite;
         }
         
         .danger-box {
@@ -116,11 +81,18 @@ st.markdown("""
             padding: 20px !important;
             border-radius: 12px !important;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Animated header with your specific GIF
+# Animated header with GIF
 col1, col2, col3 = st.columns([1,2,1])
 with col2:
     st.image("Pay Per Click Digital Marketing.gif", 
@@ -133,18 +105,8 @@ st.markdown('<p class="subtitle-text">Predict customer churn with machine learni
 
 # Input form with enhanced styling
 def user_input():
-    with stylable_container(
-        key="input_form",
-        css_styles="""
-            {
-                background-color: #f8f9fa;
-                border-radius: 12px;
-                padding: 2rem;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                margin-bottom: 2rem;
-            }
-        """
-    ):
+    with st.container():
+        st.markdown('<div class="input-container">', unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         
         with col1:
@@ -169,6 +131,8 @@ def user_input():
             MonthlyCharges = st.number_input("Monthly Charges ($)", min_value=0.0, format="%.2f")
             TotalCharges = st.number_input("Total Charges ($)", min_value=0.0, format="%.2f")
             TotalServices = st.slider("Total Services Used", 0, 10, 5)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
     data = pd.DataFrame({
         'SeniorCitizen': [SeniorCitizen],
@@ -208,57 +172,35 @@ input_df = user_input()
 # Encode the input data
 encoded_input_df = encode_input_data(input_df)
 
-# Add the prediction button with special effects
+# Add the prediction button
 if st.button("✨ Predict Churn Probability", key="predict_button"):
     with st.spinner('Analyzing customer data...'):
         time.sleep(1.5)  # Simulate processing time
-        rain(emoji="💫", font_size=20, falling_speed=5)
         
     prediction_proba = model.predict_proba(encoded_input_df)[0][1]
     prediction = 1 if prediction_proba >= threshold else 0
 
     # Animated result display
     if prediction == 1:
-        with stylable_container(
-            key="danger_container",
-            css_styles="""
-                {
-                    animation: pulse 2s infinite;
-                }
-                @keyframes pulse {
-                    0% { transform: scale(1); }
-                    50% { transform: scale(1.02); }
-                    100% { transform: scale(1); }
-                }
-            """
-        ):
-            st.markdown(f"""
-                <div class="danger-box">
-                    <h2 style='color: white; text-align: center;'>🚨 High Churn Risk</h2>
-                    <p style='color: white; text-align: center; font-size: 1.5rem;'>
-                        Probability: {prediction_proba:.2%}
-                    </p>
-                </div>
-            """, unsafe_allow_html=True)
-            st.balloons()
+        st.markdown(f"""
+            <div class="danger-box">
+                <h2 style='color: white; text-align: center;'>🚨 High Churn Risk</h2>
+                <p style='color: white; text-align: center; font-size: 1.5rem;'>
+                    Probability: {prediction_proba:.2%}
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        st.balloons()
     else:
-        with stylable_container(
-            key="success_container",
-            css_styles="""
-                {
-                    animation: pulse 2s infinite;
-                }
-            """
-        ):
-            st.markdown(f"""
-                <div class="success-box">
-                    <h2 style='color: white; text-align: center;'>✅ Loyal Customer</h2>
-                    <p style='color: white; text-align: center; font-size: 1.5rem;'>
-                        Retention Probability: {(1 - prediction_proba):.2%}
-                    </p>
-                </div>
-            """, unsafe_allow_html=True)
-            rain(emoji="🎉", font_size=20, falling_speed=5)
+        st.markdown(f"""
+            <div class="success-box">
+                <h2 style='color: white; text-align: center;'>✅ Loyal Customer</h2>
+                <p style='color: white; text-align: center; font-size: 1.5rem;'>
+                    Retention Probability: {(1 - prediction_proba):.2%}
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        st.snow()
 
     # Interactive pie chart
     fig = go.Figure(data=[go.Pie(
@@ -283,7 +225,7 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
 
     # Log prediction to MLflow
     try:
-        mlflow.set_tracking_uri("http://localhost:5000")
+        mlflow.set_tracking_uri("http://127.0.0.1:5000")
         mlflow.set_experiment("Churn_Prediction_App")
         
         with mlflow.start_run(run_name="User_Prediction"):
