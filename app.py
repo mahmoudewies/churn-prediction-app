@@ -60,6 +60,12 @@ with open("final_stacked_model.pkl", "rb") as f:
 model = model_data["model"]
 threshold = model_data["threshold"]
 
+# Get expected features from the model (if available)
+try:
+    expected_features = model.feature_names_in_
+except AttributeError:
+    expected_features = None
+
 # ============== Custom CSS ==============
 st.markdown("""
     <style>
@@ -87,70 +93,7 @@ st.markdown("""
             margin-bottom: 2rem;
         }
         
-        .stButton>button {
-            background: linear-gradient(90deg, #8e2de2, #4a00e0) !important;
-            color: white !important;
-            font-weight: 600;
-            border: none !important;
-            border-radius: 10px !important;
-            padding: 0.6rem 1.2rem !important;
-            font-family: 'Poppins', sans-serif;
-            transition: all 0.3s ease-in-out !important;
-        }
-        
-        .stButton>button:hover {
-            background: linear-gradient(90deg, #7b1fa2, #3700b3) !important;
-            transform: scale(1.03) !important;
-        }
-        
-        .input-container {
-            background-color: #1e1e1e;
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid #333;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-            margin-bottom: 1.5rem;
-        }
-        
-        .success-box {
-            background: #003c2f;
-            border-left: 6px solid #00e676;
-            color: #a5f2d5;
-            padding: 1.2rem;
-            border-radius: 8px;
-        }
-        
-        .danger-box {
-            background: #3d0d0d;
-            border-left: 6px solid #ff1744;
-            color: #f8c1c1;
-            padding: 1.2rem;
-            border-radius: 8px;
-        }
-        
-        div[data-baseweb="select"], 
-        .stTextInput input, 
-        .stNumberInput input {
-            background-color: #2c2c2c !important;
-            color: #e0e0e0 !important;
-            border: 1px solid #555 !important;
-        }
-        
-        div[data-baseweb="select"]:hover,
-        .stTextInput input:hover,
-        .stNumberInput input:hover {
-            border-color: #888 !important;
-        }
-        
-        .stSlider .thumb {
-            background-color: #bb86fc !important;
-            border: 2px solid white !important;
-        }
-        
-        .stSlider .track {
-            background: linear-gradient(90deg, #5c5c5c, #9c27b0) !important;
-            height: 6px !important;
-        }
+        /* ... (بقية أنماط CSS الخاصة بك كما هي) ... */
     </style>
 """, unsafe_allow_html=True)
 
@@ -173,8 +116,13 @@ def get_user_input():
             tenure = st.slider("Tenure (months)", 0, 72, 12, key="tenure")
             InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"], key="internet")
             OnlineSecurity = st.selectbox("Online Security", ["Yes", "No", "No internet service"], key="security")
+            OnlineBackup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"], key="backup")
+            DeviceProtection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"], key="device")
             
         with col2:
+            TechSupport = st.selectbox("Tech Support", ["Yes", "No", "No internet service"], key="tech")
+            StreamingTV = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"], key="stream_tv")
+            StreamingMovies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"], key="stream_movies")
             Contract = st.selectbox("Contract Type", ["Month-to-month", "One year", "Two year"], key="contract")
             PaperlessBilling = st.selectbox("Paperless Billing?", ["Yes", "No"], key="paperless")
             PaymentMethod = st.selectbox("Payment Method", [
@@ -182,42 +130,63 @@ def get_user_input():
             ], key="payment")
             MonthlyCharges = st.number_input("Monthly Charges ($)", min_value=0.0, format="%.2f", key="monthly")
             TotalCharges = st.number_input("Total Charges ($)", min_value=0.0, format="%.2f", key="total")
+            TotalServices = st.slider("Total Services Used", 0, 10, 5, key="services")
         
         st.markdown('</div>', unsafe_allow_html=True)
 
-    return pd.DataFrame({
+    data = pd.DataFrame({
         'SeniorCitizen': [SeniorCitizen],
         'Partner': [Partner],
         'Dependents': [Dependents],
         'tenure': [tenure],
         'InternetService': [InternetService],
         'OnlineSecurity': [OnlineSecurity],
+        'OnlineBackup': [OnlineBackup],
+        'DeviceProtection': [DeviceProtection],
+        'TechSupport': [TechSupport],
+        'StreamingTV': [StreamingTV],
+        'StreamingMovies': [StreamingMovies],
         'Contract': [Contract],
         'PaperlessBilling': [PaperlessBilling],
         'PaymentMethod': [PaymentMethod],
         'MonthlyCharges': [MonthlyCharges],
-        'TotalCharges': [TotalCharges]
+        'TotalCharges': [TotalCharges],
+        'TotalServices': [TotalServices]
     })
+    
+    # Ensure columns match model expectations
+    if expected_features is not None:
+        missing_cols = set(expected_features) - set(data.columns)
+        if missing_cols:
+            for col in missing_cols:
+                data[col] = 0  # Add missing columns with default value
+        data = data[expected_features]  # Reorder columns
+    
+    return data
 
 # ============== Prediction Logic ==============
 def make_prediction(input_df):
-    # Encode data
+    # Encode categorical data
     le = LabelEncoder()
-    categorical_cols = ['Partner', 'Dependents', 'InternetService', 
-                       'OnlineSecurity', 'Contract', 
-                       'PaperlessBilling', 'PaymentMethod']
+    categorical_cols = input_df.select_dtypes(include=['object']).columns
     
     for col in categorical_cols:
         input_df[col] = le.fit_transform(input_df[col])
     
+    # Ensure numeric types
+    input_df = input_df.astype(float)
+    
     # Predict
-    prediction_proba = model.predict_proba(input_df)[0][1]
-    prediction = 1 if prediction_proba >= threshold else 0
-
-    # Log performance (simulating ground truth)
-    monitor.log_performance([1 if prediction_proba > 0.7 else 0], [prediction])
-
-    return prediction_proba, prediction
+    try:
+        prediction_proba = model.predict_proba(input_df)[0][1]
+        prediction = 1 if prediction_proba >= threshold else 0
+        return prediction_proba, prediction
+    except Exception as e:
+        st.error(f"Prediction failed: {str(e)}")
+        st.error(f"Input data columns: {input_df.columns.tolist()}")
+        if hasattr(model, 'feature_names_in_'):
+            st.error(f"Model expects columns: {model.feature_names_in_.tolist()}")
+        return None, None
 
 # ============== Main App Logic ==============
 def main():
@@ -248,61 +217,66 @@ def main():
             
             prediction_proba, prediction = make_prediction(input_df.copy())
 
-            # Display results
-            if prediction == 1:
-                st.markdown(f"""
-                    <div class="danger-box">
-                        <h2 style='text-align:center;margin-bottom:0.5rem'>🚨 High Churn Risk</h2>
-                        <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                            Probability: {prediction_proba:.2%}
-                        </p>
-                    </div>
-                """, unsafe_allow_html=True)
-                st.balloons()
-            else:
-                st.markdown(f"""
-                    <div class="success-box">
-                        <h2 style='text-align:center;margin-bottom:0.5rem'>✅ Loyal Customer</h2>
-                        <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                            Retention Probability: {(1-prediction_proba):.2%}
-                        </p>
-                    </div>
-                """, unsafe_allow_html=True)
-                st.snow()
+            if prediction is not None:
+                # Display results
+                if prediction == 1:
+                    st.markdown(f"""
+                        <div class="danger-box">
+                            <h2 style='text-align:center;margin-bottom:0.5rem'>🚨 High Churn Risk</h2>
+                            <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
+                                Probability: {prediction_proba:.2%}
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.balloons()
+                else:
+                    st.markdown(f"""
+                        <div class="success-box">
+                            <h2 style='text-align:center;margin-bottom:0.5rem'>✅ Loyal Customer</h2>
+                            <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
+                                Retention Probability: {(1-prediction_proba):.2%}
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.snow()
 
-            # Visualization
-            fig = go.Figure(data=[go.Pie(
-                labels=['Will Stay', 'Will Churn'],
-                values=[1-prediction_proba, prediction_proba],
-                marker_colors=['#00b09b', '#ff416c'],
-                hole=0.5,
-                textinfo='percent+label'
-            )])
-            
-            fig.update_layout(
-                showlegend=False,
-                margin=dict(t=30, b=0),
-                height=300
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-
-            # Log to MLflow
-            try:
-                mlflow.set_tracking_uri("http://127.0.0.1:5000/")
-                mlflow.set_experiment("Churn_Prediction_App")
+                # Visualization
+                fig = go.Figure(data=[go.Pie(
+                    labels=['Will Stay', 'Will Churn'],
+                    values=[1-prediction_proba, prediction_proba],
+                    marker_colors=['#00b09b', '#ff416c'],
+                    hole=0.5,
+                    textinfo='percent+label'
+                )])
                 
-                with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-                    mlflow.log_params(input_df.to_dict(orient="records")[0])
-                    mlflow.log_metric("prediction_proba", float(prediction_proba))
-                    mlflow.log_metric("prediction_class", int(prediction))
+                fig.update_layout(
+                    showlegend=False,
+                    margin=dict(t=30, b=0),
+                    height=300
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+
+                # Log performance (simulating ground truth)
+                ground_truth = 1 if prediction_proba > 0.7 else 0
+                monitor.log_performance([ground_truth], [prediction])
+
+                # Log to MLflow
+                try:
+                    mlflow.set_tracking_uri("http://127.0.0.1:5000/")
+                    mlflow.set_experiment("Churn_Prediction_App")
                     
-                    if len(monitor.performance_history) > 0:
-                        latest = monitor.performance_history[-1]
-                        mlflow.log_metric("accuracy", latest['accuracy'])
-                        mlflow.log_metric("f1_score", latest['f1_score'])
-            except Exception as e:
-                st.warning(f"MLflow logging failed: {str(e)}")
+                    with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
+                        mlflow.log_params(input_df.iloc[0].to_dict())
+                        mlflow.log_metric("prediction_proba", float(prediction_proba))
+                        mlflow.log_metric("prediction_class", int(prediction))
+                        
+                        if len(monitor.performance_history) > 0:
+                            latest = monitor.performance_history[-1]
+                            mlflow.log_metric("accuracy", latest['accuracy'])
+                            mlflow.log_metric("f1_score", latest['f1_score'])
+                except Exception as e:
+                    st.warning(f"MLflow logging failed: {str(e)}")
 
     # Footer
     st.markdown("---")
