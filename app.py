@@ -214,7 +214,7 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
                 </p>
             </div>
         """, unsafe_allow_html=True)
-        st.markdown("🚨 Danger Ahead! Take action!")
+        st.balloons()
 
     else:
         st.markdown(f"""
@@ -225,7 +225,7 @@ if st.button("✨ Predict Churn Probability", key="predict_button"):
                 </p>
             </div>
         """, unsafe_allow_html=True)
-        st.markdown("🎉 Celebration Time! Great news!")
+        st.snow()
 
 
     # Interactive pie chart
