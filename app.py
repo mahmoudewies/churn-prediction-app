@@ -8,6 +8,8 @@ import time
 from datetime import datetime
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 
 # MUST be the first command
 st.set_page_config(
@@ -45,7 +47,43 @@ def retrain_model():
     with st.sidebar.expander("🔧 Model Retraining"):
         if st.button("Trigger Retraining", key="retrain_btn"):
             with st.spinner("Retraining model..."):
-                time.sleep(5)  # Simulate retraining
+                # Load the dataset again
+                df = pd.read_csv("WA_Fn-UseC_-Telco-Customer-Churn.csv")
+
+                # Preprocessing
+                categorical_cols = [
+                    'Partner', 'Dependents', 'InternetService', 'OnlineSecurity', 'OnlineBackup', 
+                    'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 
+                    'Contract', 'PaperlessBilling', 'PaymentMethod'
+                ]
+                
+                # Convert categorical columns to labels
+                le = LabelEncoder()
+                for col in categorical_cols:
+                    df[col] = le.fit_transform(df[col])
+
+                # Prepare feature set and target
+                X = df[['SeniorCitizen', 'Partner', 'Dependents', 'tenure', 'InternetService',
+                        'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport',
+                        'StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling',
+                        'PaymentMethod', 'MonthlyCharges', 'TotalCharges', 'TotalServices']]
+                y = df['Churn']
+
+                # Split data (train/test)
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+                # Train the model (example: RandomForest)
+                model = RandomForestClassifier(n_estimators=100, random_state=42)
+                model.fit(X_train, y_train)
+
+                # Save the retrained model and update threshold
+                with open("final_stacked_model.pkl", "wb") as f:
+                    pickle.dump({
+                        "model": model,
+                        "threshold": 0.5  # You can fine-tune this threshold
+                    }, f)
+
+                # Log retraining completion
                 st.success("Model retrained successfully!")
                 st.balloons()
 
@@ -95,13 +133,11 @@ st.markdown("""
             text-align: center;
             margin-bottom: 2rem;
         }
-        
-        /* ... (بقية أنماط CSS الخاصة بك كما هي) ... */
     </style>
 """, unsafe_allow_html=True)
 
 # ============== App Header ==============
-col1, col2, col3 = st.columns([1,3,1])
+col1, col2, col3 = st.columns([1, 3, 1])
 with col2:
     st.markdown('<h1 class="title-text">✨ Churn Prediction Wizard</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle-text">Predict customer churn with machine learning precision</p>', unsafe_allow_html=True)
@@ -262,27 +298,10 @@ def main():
 
                 # Log performance (simulating ground truth)
                 # Ask user for actual (ground truth) label
-                ground_truth = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
-                
-                # Convert to binary
-                ground_truth_binary = 0 if ground_truth == "Stayed" else 1
-                
-                # Log performance
-                monitor.log_performance([ground_truth_binary], [prediction])
-
-                # Log to MLflow
-                try:
-                    mlflow.set_tracking_uri("http://127.0.0.1:5000/")
-                    mlflow.set_experiment("Churn_Prediction_App")
-                    
-                    with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-                        mlflow.log_params(input_df.iloc[0].to_dict())
-                        mlflow.log_metric("prediction_proba", float(prediction_proba))
-                        mlflow.log_metric("prediction", int(prediction))
-                        mlflow.log_metric("ground_truth", int(ground_truth_binary))
-                        mlflow.log_artifact("final_stacked_model.pkl")
-                except Exception as e:
-                    st.warning(f"Error logging to MLflow: {str(e)}")
+                ground_truth = st.radio("🔍 Confirm Customer Churn (Ground Truth)", [None, 1, 0], key="truth")
+                if ground_truth is not None:
+                    monitor.log_performance([ground_truth], [prediction])
+                    st.success("Performance logged successfully!")
 
 if __name__ == "__main__":
     main()
