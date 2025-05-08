@@ -8,7 +8,8 @@ import time
 from datetime import datetime
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score
-
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 # MUST be the first command
 st.set_page_config(
     page_title="✨ Churn Prediction Wizard",
