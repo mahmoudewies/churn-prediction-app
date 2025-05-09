@@ -237,9 +237,6 @@ def make_prediction(input_df):
 # ============== Main App Logic ==============
 def main():
     retrain_model()
-    # متغير لتحديد ما إذا كانت النتيجة معروضة
-    if "show_result" not in st.session_state:
-        st.session_state["show_result"] = False
 
     # Model Monitoring Dashboard
     if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
@@ -320,27 +317,39 @@ def main():
                 # Ask user for actual (ground truth) label
                 # Initialize session_state variable if not present
                 # Radio input but don't trigger logic on change
+                # Initialize session state variables if they don't exist
+                if "ground_truth_choice" not in st.session_state:
+                    st.session_state["ground_truth_choice"] = "Stayed"
+                if "show_prediction" not in st.session_state:
+                    st.session_state["show_prediction"] = True
+                
+                # Only show prediction results if the flag is True
+                if st.session_state["show_prediction"]:
+                    # Display results and visualization code here...
+                    # (كل كود عرض النتائج الحالي يجب أن يكون داخل هذه الحالة الشرطية)
+                
+                # Radio input
                 ground_truth = st.radio(
                     "🔍 What was the actual outcome for this customer?",
                     ["Stayed", "Churned"],
-                    index=0 if st.session_state.get("ground_truth_choice") is None else ["Stayed", "Churned"].index(st.session_state["ground_truth_choice"]),
+                    index=0 if st.session_state["ground_truth_choice"] == "Stayed" else 1,
                     key="ground_truth_radio"
                 )
                 
-                # Store selection but delay action
-                if "temp_ground_truth_choice" not in st.session_state:
-                    st.session_state["temp_ground_truth_choice"] = ground_truth
-                else:
-                    st.session_state["temp_ground_truth_choice"] = ground_truth
-
+                # Update the choice in session state when radio changes
+                if ground_truth != st.session_state["ground_truth_choice"]:
+                    st.session_state["ground_truth_choice"] = ground_truth
+                    # Don't hide the prediction on radio change
+                    # st.session_state["show_prediction"] = False
+                    st.rerun()
                 
                 # Confirmation button
                 if st.button("✔️ Confirm Outcome", key="confirm_outcome"):
-                    st.session_state["ground_truth_choice"] = st.session_state["temp_ground_truth_choice"]
                     ground_truth_binary = 0 if st.session_state["ground_truth_choice"] == "Stayed" else 1
                     monitor.log_performance([ground_truth_binary], [prediction])
                     st.success("✅ Performance has been recorded and chart will update accordingly.")
-
+                    # Optional: hide prediction after confirmation if desired
+                    # st.session_state["show_prediction"] = False
 
                 # Log to MLflow
                 try:
@@ -358,7 +367,6 @@ def main():
                             mlflow.log_metric("f1_score", latest['f1_score'])
                 except Exception as e:
                     st.warning(f"MLflow logging failed: {str(e)}")
-                st.session_state["show_result"] = True
 
 
     # Footer
