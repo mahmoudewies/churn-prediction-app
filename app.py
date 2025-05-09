@@ -12,6 +12,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.neural_network import MLPClassifier
+
 # MUST be the first command
 st.set_page_config(
     page_title="✨ Churn Prediction Wizard",
@@ -67,48 +69,26 @@ def retrain_model():
                 # تقسيم البيانات إلى تدريب واختبار
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-                # استخدام GridSearchCV لتحسين المعلمات
-                param_grid = {
-                    'n_estimators': [100, 200],
-                    'max_depth': [None, 10, 20, 30],
-                    'min_samples_split': [2, 5, 10],
-                    'min_samples_leaf': [1, 2, 4]
-                }
+                # استخدام الشبكة العصبية (MLPClassifier)
+                nn_model = MLPClassifier(hidden_layer_sizes=(100, 100), max_iter=1000, random_state=42)
+                nn_model.fit(X_train, y_train)
 
-                rf = RandomForestClassifier(random_state=42)
-                grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5, scoring='accuracy')
-                grid_search.fit(X_train, y_train)
-
-                # استخدام أفضل معلمات من GridSearchCV
-                best_model = grid_search.best_estimator_
-
-                # حساب التقييمات باستخدام Cross-validation
-                cv_scores = cross_val_score(best_model, X_train, y_train, cv=5, scoring='accuracy')
-                mean_cv_score = cv_scores.mean()
-                st.write(f"Cross-validation accuracy: {mean_cv_score:.4f}")
-
-                # تدريب النموذج النهائي باستخدام أفضل معلمات
-                best_model.fit(X_train, y_train)
-
-                # التنبؤ على مجموعة الاختبار
-                y_pred = best_model.predict(X_test)
+                # حساب التقييمات
+                y_pred = nn_model.predict(X_test)
                 acc = accuracy_score(y_test, y_pred)
                 f1 = f1_score(y_test, y_pred)
 
-                # حساب العتبة المثلى
-                y_pred_proba = best_model.predict_proba(X_test)[:, 1]
-                optimal_threshold = 0.5  # يمكنك حساب العتبة المثلى باستخدام roc_auc_score أو أي مقياس آخر
-
-                # حفظ النموذج بعد التدريب
-                with open("final_stacked_model.pkl", "wb") as f:
-                    pickle.dump({
-                        "model": best_model,
-                        "threshold": optimal_threshold  # تأكد من أن العتبة نفسها تُحفظ
-                    }, f)
-
-                # عرض النتائج
+                # عرض التقييمات
                 st.write(f"Accuracy: {acc:.4f}")
                 st.write(f"F1 Score: {f1:.4f}")
+
+                # حفظ النموذج بعد التدريب
+                with open("final_nn_model.pkl", "wb") as f:
+                    pickle.dump({
+                        "model": nn_model,
+                    }, f)
+
+                # عرض رسالة نجاح
                 st.success("Model retrained and saved successfully!")
                 st.balloons()
 
