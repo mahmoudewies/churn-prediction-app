@@ -237,7 +237,10 @@ def make_prediction(input_df):
 # ============== Main App Logic ==============
 def main():
     retrain_model()
-    
+    # متغير لتحديد ما إذا كانت النتيجة معروضة
+    if "show_result" not in st.session_state:
+        st.session_state["show_result"] = False
+
     # Model Monitoring Dashboard
     if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
         st.subheader("Model Performance Monitoring")
@@ -355,6 +358,8 @@ def main():
                             mlflow.log_metric("f1_score", latest['f1_score'])
                 except Exception as e:
                     st.warning(f"MLflow logging failed: {str(e)}")
+                st.session_state["show_result"] = True
+
 
     # Footer
     st.markdown("---")
