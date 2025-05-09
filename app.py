@@ -239,7 +239,7 @@ def main():
     retrain_model()
     
     # Model Monitoring Dashboard
-    if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
+       if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
         st.subheader("Model Performance Monitoring")
         
         if len(monitor.performance_history) == 0:
@@ -247,11 +247,20 @@ def main():
         else:
             perf_df = pd.DataFrame(monitor.performance_history)
             st.line_chart(perf_df.set_index('timestamp'))
-            
+
             latest = perf_df.iloc[-1]
             col1, col2 = st.columns(2)
             col1.metric("Latest Accuracy", f"{latest['accuracy']:.2%}")
             col2.metric("Latest F1 Score", f"{latest['f1_score']:.2%}")
+        
+        # زر لحفظ الأداء
+        if st.sidebar.button("🔄 Refresh & Save Monitoring Log"):
+            if len(monitor.performance_history) > 0:
+                perf_df = pd.DataFrame(monitor.performance_history)
+                perf_df.to_csv("model_monitoring_log.csv", index=False)
+                st.sidebar.success("✅ Performance log saved as model_monitoring_log.csv")
+            else:
+                st.sidebar.info("ℹ️ No performance data to save.")
 
     # Get user input
     input_df = get_user_input()
