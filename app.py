@@ -318,33 +318,13 @@ def main():
                 # Initialize session_state variable if not present
                 # Radio input but don't trigger logic on change
                 # Initialize session state variables if they don't exist
-                if prediction is not None:
-                    
-                    # Initialize session state variables if they don't exist
-                    if "ground_truth_choice" not in st.session_state:
-                        st.session_state["ground_truth_choice"] = "Stayed"
-                    if "show_prediction" not in st.session_state:
-                        st.session_state["show_prediction"] = True
+                ground_truth = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
                 
-                    # Radio input
-                    ground_truth = st.radio(
-                        "🔍 What was the actual outcome for this customer?",
-                        ["Stayed", "Churned"],
-                        index=0 if st.session_state["ground_truth_choice"] == "Stayed" else 1,
-                        key="ground_truth_radio"
-                    )
+                # Convert to binary
+                ground_truth_binary = 0 if ground_truth == "Stayed" else 1
                 
-                    # Update the choice in session state when radio changes
-                    if ground_truth != st.session_state["ground_truth_choice"]:
-                        st.session_state["ground_truth_choice"] = ground_truth
-                        st.rerun()
-                
-                    # Confirmation button
-                    if st.button("✔️ Confirm Outcome", key="confirm_outcome"):
-                        ground_truth_binary = 0 if st.session_state["ground_truth_choice"] == "Stayed" else 1
-                        monitor.log_performance([ground_truth_binary], [prediction])
-                        st.success("✅ Performance has been recorded and chart will update accordingly.")
-
+                # Log performance
+                monitor.log_performance([ground_truth_binary], [prediction])
                 # Log to MLflow
                 try:
                     mlflow.set_tracking_uri("http://127.0.0.1:5000/")
