@@ -315,15 +315,26 @@ def main():
 
                 # Log performance (simulating ground truth)
                 # Ask user for actual (ground truth) label
-                ground_truth = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
-                confirm = st.button("✔️ Confirm Outcome", key="confirm_outcome")
+                # Initialize session_state variable if not present
+                if "ground_truth_choice" not in st.session_state:
+                    st.session_state["ground_truth_choice"] = None
                 
-                if confirm:
-                    ground_truth_binary = 0 if ground_truth == "Stayed" else 1
+                # Display radio and save choice to session_state
+                ground_truth = st.radio(
+                    "🔍 What was the actual outcome for this customer?",
+                    ["Stayed", "Churned"],
+                    index=0 if st.session_state["ground_truth_choice"] is None else ["Stayed", "Churned"].index(st.session_state["ground_truth_choice"]),
+                    key="ground_truth_radio"
+                )
+                
+                # Update session_state with current selection
+                st.session_state["ground_truth_choice"] = ground_truth
+                
+                # Confirmation button
+                if st.button("✔️ Confirm Outcome", key="confirm_outcome"):
+                    ground_truth_binary = 0 if st.session_state["ground_truth_choice"] == "Stayed" else 1
                     monitor.log_performance([ground_truth_binary], [prediction])
                     st.success("✅ Performance has been recorded and chart will update accordingly.")
-
-
 
 
                 # Log to MLflow
