@@ -290,7 +290,7 @@ def main():
                         <div class="success-box">
                             <h2 style='text-align:center;margin-bottom:0.5rem'>✅ Loyal Customer</h2>
                             <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                                Retention Probability: {(1-prediction_proba):.2%}
+                                Retention Probability: {(1-prediction_proba):.5%}
                             </p>
                         </div>
                     """, unsafe_allow_html=True)
