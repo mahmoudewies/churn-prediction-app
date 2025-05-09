@@ -316,22 +316,24 @@ def main():
                 # Log performance (simulating ground truth)
                 # Ask user for actual (ground truth) label
                 # Initialize session_state variable if not present
-                if "ground_truth_choice" not in st.session_state:
-                    st.session_state["ground_truth_choice"] = None
-                
-                # Display radio and save choice to session_state
+                # Radio input but don't trigger logic on change
                 ground_truth = st.radio(
                     "🔍 What was the actual outcome for this customer?",
                     ["Stayed", "Churned"],
-                    index=0 if st.session_state["ground_truth_choice"] is None else ["Stayed", "Churned"].index(st.session_state["ground_truth_choice"]),
+                    index=0 if st.session_state.get("ground_truth_choice") is None else ["Stayed", "Churned"].index(st.session_state["ground_truth_choice"]),
                     key="ground_truth_radio"
                 )
                 
-                # Update session_state with current selection
-                st.session_state["ground_truth_choice"] = ground_truth
+                # Store selection but delay action
+                if "temp_ground_truth_choice" not in st.session_state:
+                    st.session_state["temp_ground_truth_choice"] = ground_truth
+                else:
+                    st.session_state["temp_ground_truth_choice"] = ground_truth
+
                 
                 # Confirmation button
                 if st.button("✔️ Confirm Outcome", key="confirm_outcome"):
+                    st.session_state["ground_truth_choice"] = st.session_state["temp_ground_truth_choice"]
                     ground_truth_binary = 0 if st.session_state["ground_truth_choice"] == "Stayed" else 1
                     monitor.log_performance([ground_truth_binary], [prediction])
                     st.success("✅ Performance has been recorded and chart will update accordingly.")
