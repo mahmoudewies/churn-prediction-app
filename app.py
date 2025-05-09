@@ -14,7 +14,6 @@ from sklearn.model_selection import train_test_split, cross_val_score, GridSearc
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sklearn.neural_network import MLPClassifier
 
-# MUST be the first command
 st.set_page_config(
     page_title="✨ Churn Prediction Wizard",
     layout="centered",
@@ -50,10 +49,8 @@ def retrain_model():
     with st.sidebar.expander("🔧 Model Retraining"):
         if st.button("Trigger Retraining", key="retrain_btn"):
             with st.spinner("Retraining model..."):
-                # تحميل البيانات
                 df = pd.read_csv("WA_Fn-UseC_-Telco-Customer-Churn.csv")
 
-                # تحويل الأعمدة النصية إلى قيم رقمية (Label Encoding)
                 categorical_cols = ['Partner', 'Dependents', 'InternetService', 'OnlineSecurity', 'OnlineBackup', 
                                     'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 
                                     'Contract', 'PaperlessBilling', 'PaymentMethod']
@@ -62,37 +59,29 @@ def retrain_model():
                 for col in categorical_cols:
                     df[col] = le.fit_transform(df[col])
 
-                # تقسيم البيانات إلى ميزات (X) وهدف (y)
-                X = df.drop('Churn', axis=1)  # حذف عمود Churn واستخدام بقية الأعمدة
-                y = df['Churn']  # الهدف هو عمود Churn
+                X = df.drop('Churn', axis=1)
+                y = df['Churn'] 
 
-                # تقسيم البيانات إلى تدريب واختبار
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-                # استخدام الشبكة العصبية (MLPClassifier)
                 nn_model = MLPClassifier(hidden_layer_sizes=(100, 100), max_iter=1000, random_state=42)
                 nn_model.fit(X_train, y_train)
 
-                # حساب التقييمات
                 y_pred = nn_model.predict(X_test)
                 acc = accuracy_score(y_test, y_pred)
                 f1 = f1_score(y_test, y_pred)
 
-                # عرض التقييمات
                 st.write(f"Accuracy: {acc:.4f}")
                 st.write(f"F1 Score: {f1:.4f}")
 
-                # حفظ النموذج بعد التدريب
                 with open("final_nn_model.pkl", "wb") as f:
                     pickle.dump({
                         "model": nn_model,
                     }, f)
 
-                # عرض رسالة نجاح
                 st.success("Model retrained and saved successfully!")
                 st.balloons()
 
-# Display GIF in the center
 st.markdown("""
     <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
         <img src="https://raw.githubusercontent.com/mahmoudewies/churn-prediction-app/main/Pay%20Per%20Click%20Digital%20Marketing%20(1).gif" alt="GIF" width="600">
