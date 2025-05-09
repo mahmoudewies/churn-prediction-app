@@ -239,7 +239,7 @@ def main():
     retrain_model()
     
     # Model Monitoring Dashboard
-       if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
+    if st.sidebar.checkbox("Show Model Monitoring", key="monitoring"):
         st.subheader("Model Performance Monitoring")
         
         if len(monitor.performance_history) == 0:
@@ -261,6 +261,7 @@ def main():
                 st.sidebar.success("✅ Performance log saved as model_monitoring_log.csv")
             else:
                 st.sidebar.info("ℹ️ No performance data to save.")
+
 
     # Get user input
     input_df = get_user_input()
