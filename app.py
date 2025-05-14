@@ -264,7 +264,7 @@ def main():
 
             if prediction is not None:
                 # Display results
-                if prediction == 1:
+                if prediction > 0.50:
                     st.markdown(f"""
                         <div class="danger-box">
                             <h2 style='text-align:center;margin-bottom:0.5rem'>🚨 High Churn Risk</h2>
