@@ -256,80 +256,88 @@ def main():
     input_df = get_user_input()
 
     # Prediction button
-    if st.button("✨ Predict Churn Probability", key="predict_btn"):
-        with st.spinner('Analyzing customer data...'):
-            time.sleep(1.5)
+if st.button("✨ Predict Churn Probability", key="predict_btn"):
+    with st.spinner('Analyzing customer data...'):
+        time.sleep(1.5)
+        
+        prediction_proba, prediction = make_prediction(input_df.copy())
+
+        if prediction is not None:
+            # Display results based on probability
+            if prediction_proba <= 0.48:
+                st.markdown(f"""
+                    <div class="success-box">
+                        <h2 style='text-align:center;margin-bottom:0.5rem'>✅ Loyal Customer</h2>
+                        <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
+                            Probability: {prediction_proba:.2%}
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+                st.snow()
             
-            prediction_proba, prediction = make_prediction(input_df.copy())
+            elif prediction_proba <= 0.50:
+                st.markdown(f"""
+                    <div class="warning-box">
+                        <h2 style='text-align:center;margin-bottom:0.5rem'>⚠️ At Risk of Leaving</h2>
+                        <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
+                            Probability: {prediction_proba:.2%}
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+                st.snow()
+            
+            else:
+                st.markdown(f"""
+                    <div class="danger-box">
+                        <h2 style='text-align:center;margin-bottom:0.5rem'>🚨 High Churn Risk</h2>
+                        <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
+                            Probability: {prediction_proba:.2%}
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+                st.balloons()
 
-            if prediction is not None:
-                # Display results
-                if prediction > 0.50:
-                    st.markdown(f"""
-                        <div class="danger-box">
-                            <h2 style='text-align:center;margin-bottom:0.5rem'>🚨 High Churn Risk</h2>
-                            <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                                Probability: {prediction_proba:.2%}
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.balloons()
-                else:
-                    st.markdown(f"""
-                        <div class="success-box">
-                            <h2 style='text-align:center;margin-bottom:0.5rem'>✅ Loyal Customer</h2>
-                            <p style='text-align:center;font-size:1.25rem;margin-bottom:0'>
-                                Retention Probability: {(1-prediction_proba):.2%}
-                            </p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    st.snow()
+            # Visualization
+            fig = go.Figure(data=[go.Pie(
+                labels=['Will Stay', 'Will Churn'],
+                values=[1 - prediction_proba, prediction_proba],
+                marker_colors=['#00b09b', '#ff416c'],
+                hole=0.5,
+                textinfo='percent+label'
+            )])
+            
+            fig.update_layout(
+                showlegend=False,
+                margin=dict(t=30, b=0),
+                height=300
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
 
-                # Visualization
-                fig = go.Figure(data=[go.Pie(
-                    labels=['Will Stay', 'Will Churn'],
-                    values=[1-prediction_proba, prediction_proba],
-                    marker_colors=['#00b09b', '#ff416c'],
-                    hole=0.5,
-                    textinfo='percent+label'
-                )])
-                
-                fig.update_layout(
-                    showlegend=False,
-                    margin=dict(t=30, b=0),
-                    height=300
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
+            # Ground truth input
+            ground_truth = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
+            ground_truth_binary = 0 if ground_truth == "Stayed" else 1
+            
+            # Log performance
+            monitor.log_performance([ground_truth_binary], [prediction])
 
-                # Log performance (simulating ground truth)
-                # Ask user for actual (ground truth) label
-                # Initialize session_state variable if not present
-                # Radio input but don't trigger logic on change
-                # Initialize session state variables if they don't exist
-                ground_truth = st.radio("🔍 What was the actual outcome for this customer?", ["Stayed", "Churned"], index=0)
+            # MLflow logging
+            try:
+                mlflow.set_tracking_uri("http://127.0.0.1:5000/")
+                mlflow.set_experiment("Churn_Prediction_App")
                 
-                # Convert to binary
-                ground_truth_binary = 0 if ground_truth == "Stayed" else 1
-                
-                # Log performance
-                monitor.log_performance([ground_truth_binary], [prediction])
-                # Log to MLflow
-                try:
-                    mlflow.set_tracking_uri("http://127.0.0.1:5000/")
-                    mlflow.set_experiment("Churn_Prediction_App")
+                with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
+                    mlflow.log_params(input_df.iloc[0].to_dict())
+                    mlflow.log_metric("prediction_proba", float(prediction_proba))
+                    mlflow.log_metric("prediction_class", int(prediction))
                     
-                    with mlflow.start_run(run_name=f"Prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}"):
-                        mlflow.log_params(input_df.iloc[0].to_dict())
-                        mlflow.log_metric("prediction_proba", float(prediction_proba))
-                        mlflow.log_metric("prediction_class", int(prediction))
-                        
-                        if len(monitor.performance_history) > 0:
-                            latest = monitor.performance_history[-1]
-                            mlflow.log_metric("accuracy", latest['accuracy'])
-                            mlflow.log_metric("f1_score", latest['f1_score'])
-                except Exception as e:
-                    st.warning(f"MLflow logging failed: {str(e)}")
+                    if len(monitor.performance_history) > 0:
+                        latest = monitor.performance_history[-1]
+                        mlflow.log_metric("accuracy", latest['accuracy'])
+                        mlflow.log_metric("f1_score", latest['f1_score'])
+            except Exception as e:
+                st.warning(f"MLflow logging failed: {str(e)}")
+
 
 
     # Footer
